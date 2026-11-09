@@ -1,1 +1,48 @@
 # BensBigAdventure
+
+**Ben's Monster Truck Rally**: a side-scrolling monster truck game for a 6-year-old, built with [Phaser 3](https://phaser.io/).
+Drive over bumpy hills, launch off ramps, smash cardboard boxes, and collect gold stars on the way to the finish flag.
+No game over, no timer: you can't fail, only have fun.
+
+## Play it
+
+The game needs to be served over http (browsers block loading the images from a plain file).
+From this folder run:
+
+```bash
+python -m http.server 8000
+```
+
+Then open <http://localhost:8000> in a browser (works on a laptop or a tablet on the same Wi-Fi via your computer's IP address).
+
+## Controls
+
+| Action | Touch / mouse | Keyboard |
+|---|---|---|
+| Drive | big green ▶ button (hold) | → or D |
+| Back up | small grey ◀ button (hold) | ← or A |
+| Jump | blue JUMP button | Space, ↑ or W |
+
+## Project layout
+
+```
+index.html              page that loads Phaser (from a CDN) and the game
+src/main.js             game setup
+src/scenes/BootScene.js loads the truck art, draws stars/boxes/buttons
+src/scenes/TitleScene.js title screen with the GO! button
+src/scenes/GameScene.js the level: driving, jumping, boxes, stars, finish
+src/level.js            level 1 layout: ramps, box stacks, star positions
+src/truck.js            the truck drawing (body, wheels, struts)
+src/sound.js            sound effects, generated in code (no audio files)
+assets/sprites/         the truck parts as transparent PNGs
+art/source/             the original art sheet the sprites were cut from
+tools/slice_sprites.py  script that cuts the sprites out of the art sheet
+```
+
+## Tweaking
+
+- **Level layout**: edit `RAMPS`, `BOX_STACKS` and the star helpers in `src/level.js`.
+- **How the truck feels**: the constants at the top of `src/scenes/GameScene.js`
+  (`MAX_SPEED`, `JUMP_SPEED`, `GRAVITY`, `RAMP_BOOST`, suspension `SPRING`/`DAMPING`).
+- **New art**: replace the PNGs in `assets/sprites/` with the same file names. If you get a new
+  art sheet, re-run `python tools/slice_sprites.py` (needs `pip install pillow numpy scipy`).
