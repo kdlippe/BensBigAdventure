@@ -69,6 +69,15 @@ export class Truck {
     return { x: BODY_SHIFT - 140, y: -BODY_LIFT - 78 };
   }
 
+  // the tops of the two exhaust stacks (measured on truck_body.png), for nitro flames
+  get pipeTipsLocal() {
+    const y = -BODY_LIFT - 58 + this.body.y + BODY_LIFT; // follow the body's suspension bounce
+    return [
+      { x: BODY_SHIFT - 184, y },
+      { x: BODY_SHIFT - 136, y: y - 2 },
+    ];
+  }
+
   get centreLocal() {
     return { x: BODY_SHIFT, y: -BODY_LIFT + 20 };
   }

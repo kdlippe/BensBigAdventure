@@ -21,6 +21,10 @@ const NITRO_TIME = 3; // seconds per charge
 const NITRO_MAX = 3; // most charges you can carry
 const NITRO_START = 1; // charges at the start of the level
 
+const BRAKE = 700; // how hard reverse slows you down from nitro speed
+const FLAME_DIR = 0.95; // flames shoot up and back from the pipes (radians from straight back)
+const FIRE_COLOURS = [0xffffff, 0xfff176, 0xffb300, 0xff6d00, 0xd50000];
+
 const BEST_KEY = 'bmtr.best.level1';
 
 const OUTLINE = 0x16161a;
@@ -42,7 +46,6 @@ export class GameScene extends Phaser.Scene {
     this.pebbleTimer = 0;
     this.debris = []; // flying things: pebbles, smashed boxes, confetti
     this.nitro = { charges: NITRO_START, time: 0 };
-    this.flameTimer = 0;
     this.lineTimer = 0;
     this.elapsed = 0; // race time in seconds
     this.timerOn = false; // starts when Ben first drives
@@ -102,6 +105,7 @@ export class GameScene extends Phaser.Scene {
     };
     this.truck = new Truck(this, this.t.x, this.t.y);
     this.truck.container.setDepth(30);
+    this.makeFire();
 
     // camera looks a bit ahead of the truck
     this.cameras.main.startFollow(this.truck.container, false, 0.12, 0.08, -260, 90);
@@ -295,7 +299,11 @@ export class GameScene extends Phaser.Scene {
     }
     if (n.time > 0) {
       n.time = Math.max(0, n.time - dt);
-      if (!this.finished) throttle = 1; // boosting always drives forward
+      if (!this.finished) {
+        // reverse cancels the boost (and brakes below); otherwise boosting drives forward
+        if (throttle < 0) n.time = 0;
+        else throttle = 1;
+      }
     }
     const boosting = n.time > 0;
     const topSpeed = boosting ? NITRO_SPEED : MAX_SPEED;
@@ -308,7 +316,15 @@ export class GameScene extends Phaser.Scene {
       if (t.vx > topSpeed) t.vx = Math.max(topSpeed, t.vx - 350 * dt); // ease down after a boost
       else t.vx = Math.min(topSpeed, t.vx + (boosting ? NITRO_ACCEL : ACCEL) * dt * (t.vx < 0 ? 3 : 1));
     }
-    else if (throttle < 0) t.vx = Math.max(-MAX_SPEED * 0.5, t.vx - ACCEL * dt * (t.vx > 0 ? 3 : 1));
+    else if (throttle < 0) {
+      if (t.vx > 0) {
+        // braking: smooth from nitro speed, then firm, down to a stop
+        t.vx = Math.max(0, t.vx - (t.vx > MAX_SPEED ? BRAKE : BRAKE * 1.6) * dt);
+        this.skid(dt);
+      } else {
+        t.vx = Math.max(-MAX_SPEED * 0.5, t.vx - ACCEL * dt);
+      }
+    }
     else {
       const drag = (this.finished ? 400 : t.grounded ? 380 : 40) * dt;
       t.vx -= Math.sign(t.vx) * Math.min(Math.abs(t.vx), drag);
@@ -412,6 +428,7 @@ export class GameScene extends Phaser.Scene {
     this.truck.spin(moved);
 
     this.effects(dt, throttle, rx);
+    this.updateFire(boosting);
     if (boosting) this.nitroEffects(dt);
     this.checkBoxes();
     this.checkStars(dt);
@@ -646,21 +663,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   nitroEffects(dt) {
-    // flames out of both exhaust pipes
-    this.flameTimer -= dt;
-    if (this.flameTimer <= 0) {
-      this.flameTimer = 0.025;
-      const ex = this.truck.exhaustLocal;
-      for (const off of [0, 50]) {
-        const p = this.truck.toWorld(ex.x + off, ex.y + 6);
-        const f = this.add.image(p.x, p.y, 'flame')
-          .setOrigin(0.85, 0.5)
-          .setRotation(this.t.angle + 0.85 + Phaser.Math.FloatBetween(-0.15, 0.15))
-          .setScale(Phaser.Math.FloatBetween(0.5, 0.8))
-          .setDepth(29);
-        this.tweens.add({ targets: f, scale: 0.2, alpha: 0, duration: 160, onComplete: () => f.destroy() });
-      }
-    }
     // speed lines rushing past
     this.lineTimer -= dt;
     if (this.lineTimer <= 0) {
@@ -672,6 +674,66 @@ export class GameScene extends Phaser.Scene {
         .setAlpha(0.75)
         .setScale(Phaser.Math.FloatBetween(0.6, 1.4), 1);
       this.tweens.add({ targets: l, x: -200, duration: 260, onComplete: () => l.destroy() });
+    }
+  }
+
+  // Two flame jets (one per exhaust pipe) plus a stream of fire particles
+  // that cool from white -> yellow -> orange -> red as they fly off.
+  makeFire() {
+    this.jets = [0, 1].map(() => this.add.image(0, 0, 'flame').setOrigin(0.93, 0.5).setDepth(29).setVisible(false));
+    this.fireAngle = 0;
+    this.fire = this.add.particles(0, 0, 'flare', {
+      emitting: false,
+      lifespan: { min: 220, max: 420 },
+      speed: { min: 220, max: 380 },
+      angle: { onEmit: () => this.fireAngle + Phaser.Math.Between(-14, 14) },
+      scale: { start: 0.75, end: 0.15 },
+      alpha: { start: 1, end: 0 },
+      color: FIRE_COLOURS,
+      colorEase: 'quad.out',
+    }).setDepth(28);
+  }
+
+  updateFire(boosting) {
+    const on = boosting && !this.finished;
+    this.jets.forEach((j) => j.setVisible(on));
+    if (!on) return;
+    const dir = this.t.angle + FLAME_DIR; // rotation that points the flame up and back
+    // particle angle in degrees: the flame texture points left, i.e. 180 deg
+    this.fireAngle = Phaser.Math.RadToDeg(dir) + 180;
+    this.truck.pipeTipsLocal.forEach((tip, i) => {
+      const p = this.truck.toWorld(tip.x, tip.y);
+      this.jets[i]
+        .setPosition(p.x, p.y)
+        .setRotation(dir + Phaser.Math.FloatBetween(-0.08, 0.08))
+        .setScale(Phaser.Math.FloatBetween(0.7, 1.05), Phaser.Math.FloatBetween(0.55, 0.75));
+      this.fire.emitParticleAt(p.x, p.y, 2);
+    });
+  }
+
+  skid(dt) {
+    const t = this.t;
+    if (!t.grounded || t.vx < 120) return;
+    this.skidTimer = (this.skidTimer || 0) - dt;
+    if (this.skidTimer > 0) return;
+    this.skidTimer = 0.06;
+    const cos = Math.cos(t.angle);
+    for (const wx of [t.x - HALF_BASE * cos, t.x + HALF_BASE * cos]) {
+      const gy = this.level.groundY(wx);
+      const d = this.add.image(wx + 20, gy - 8, 'dust').setScale(0.07).setDepth(32).setAlpha(0.9);
+      this.tweens.add({
+        targets: d,
+        x: wx + 60 + t.vx * 0.1,
+        y: gy - 40,
+        scale: 0.22,
+        alpha: 0,
+        duration: 500,
+        onComplete: () => d.destroy(),
+      });
+    }
+    if (!this.skidSound || this.skidSound < this.time.now) {
+      sfx.skid();
+      this.skidSound = this.time.now + 350;
     }
   }
 
