@@ -5,6 +5,7 @@ import { requestLandscape } from '../device.js';
 import { textStyle } from '../style.js';
 import { addBackdrop, addGround, SKY } from '../scenery.js';
 import { FLAME_ART } from '../flameArt.js';
+import { Crab, CRAB_HALF_WIDTH } from '../crab.js';
 
 // ---- feel knobs (tweak these to make the truck faster, floatier, bouncier) ----
 const GRAVITY = 1500;
@@ -79,6 +80,9 @@ export class GameScene extends Phaser.Scene {
       });
       return { ...s, got: false, img };
     });
+
+    this.crabs = this.level.crabs.map((c) => new Crab(this, c));
+    this.bumpCooldown = 0;
 
     this.cans = this.level.nitro.map((n, i) => {
       const img = this.add.image(n.x, n.y, 'nitro').setScale(0.8).setDepth(25);
@@ -336,6 +340,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     const prevX = t.x;
+    const prevBottom = t.y + WHEEL_R; // bottom of the wheels before moving (for landing on crabs)
     t.x = Phaser.Math.Clamp(t.x + t.vx * dt, 150, this.level.length - 200);
     if (t.x === 150 || t.x === this.level.length - 200) t.vx = 0;
     const moved = t.x - prevX;
@@ -419,6 +424,8 @@ export class GameScene extends Phaser.Scene {
         }
       }
     }
+
+    this.updateCrabs(dt, time, prevBottom);
 
     // ---- suspension & body tilt ----
     t.squashV += (-SPRING * t.squash - DAMPING * t.squashV) * dt;
@@ -517,6 +524,48 @@ export class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: this.starText, scale: 1.15, yoyo: true, duration: 120 });
       }
     }
+  }
+
+  // Crabs walk about; land on one to squish it, drive into one and it bumps you back.
+  updateCrabs(dt, time, prevBottom) {
+    const t = this.t;
+    this.bumpCooldown = Math.max(0, this.bumpCooldown - dt);
+    for (const c of this.crabs) {
+      c.update(dt, time, this.level.groundY);
+      if (c.squished || this.finished) continue;
+      const overlapX = c.x + CRAB_HALF_WIDTH > t.x - 150 && c.x - CRAB_HALF_WIDTH < t.x + 150;
+      const bottom = t.y + WHEEL_R;
+      if (!overlapX || bottom < c.top) continue;
+      if (t.vy > 0 && prevBottom <= c.top + 30) this.squishCrab(c);
+      else if (this.bumpCooldown <= 0) this.bumpCrab(c);
+    }
+  }
+
+  squishCrab(c) {
+    const t = this.t;
+    c.squish();
+    this.crabsSquished = (this.crabsSquished || 0) + 1;
+    t.vy = -560; // boing!
+    t.grounded = false;
+    t.airTime = 0.2;
+    t.squashV += 180;
+    sfx.squish();
+    this.dustAt(c.x, this.level.groundY(c.x), 1);
+    this.cameras.main.shake(120, 0.005);
+  }
+
+  bumpCrab(c) {
+    const t = this.t;
+    const away = t.x < c.x ? -1 : 1;
+    t.vx = away * 300;
+    t.vy = -380;
+    t.grounded = false;
+    t.airTime = 0.2;
+    this.nitro.time = 0; // a crab pinch ends the boost
+    this.bumpCooldown = 0.8;
+    c.snap();
+    sfx.bump();
+    this.cameras.main.shake(150, 0.008);
   }
 
   startNitro() {

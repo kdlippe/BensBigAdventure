@@ -40,6 +40,12 @@ PROPS = {  # in props.png
     "tires": (374, 277, 664, 557),
     "finish_gate": (682, 24, 1001, 562),
 }
+CRAB = {  # in crab.png: (x0, y0, x1, y1, keep only the biggest piece?)
+    "crab_body": (166, 96, 493, 331, True),
+    "crab_claw": (29, 35, 197, 336, True),  # the raised claw
+    "crab_leg": (245, 464, 409, 714, True),
+    "crab_dizzy": (575, 100, 1004, 420, False),  # squished crab + its stars and spirals
+}
 
 
 def cut_white(rgb, hole_min=2500):
@@ -66,6 +72,17 @@ def cut_white(rgb, hole_min=2500):
     out[ring, 3] = (a[ring] * 255).astype(np.uint8)
     out[ring, :3] = (22, 22, 24)
     return out
+
+
+def keep_largest(rgba):
+    """Drop everything except the biggest opaque piece (bits of neighbouring parts)."""
+    solid = rgba[..., 3] > 8
+    lab, n = ndimage.label(solid)
+    if n > 1:
+        sizes = ndimage.sum(solid, lab, range(1, n + 1))
+        rgba = rgba.copy()
+        rgba[lab != int(np.argmax(sizes)) + 1, 3] = 0
+    return rgba
 
 
 def trim(rgba, pad=2):
@@ -146,6 +163,13 @@ def main():
         src = load(sheet)
         for name, (x0, y0, x1, y1) in boxes.items():
             save(trim(cut_white(src[y0:y1, x0:x1])), f"{name}.png")
+
+    # crab enemy parts. The eyes are enclosed white areas, so only treat much
+    # bigger enclosed white as background.
+    src = load("crab.png")
+    for name, (x0, y0, x1, y1, largest) in CRAB.items():
+        part = cut_white(src[y0:y1, x0:x1], hole_min=9000)
+        save(trim(keep_largest(part) if largest else part), f"{name}.png")
 
     # nitro flame: points left, round base on the right. Its white-hot core is
     # an enclosed near-white area, so don't treat enclosed white as background.

@@ -4,6 +4,7 @@ import { Truck } from '../truck.js';
 const SPRITES = ['truck_body', 'wheel', 'strut', 'puff', 'puff2', 'pebble', 'dust', 'sparkle'];
 const ENV_PNG = [
   'grass_strip', 'ramp', 'tuft', 'mushroom', 'rocks', 'flower', 'bush', 'flame_jet',
+  'crab_body', 'crab_claw', 'crab_leg', 'crab_dizzy',
   'fence', 'tree', 'tires', 'finish_gate',
 ];
 const OUTLINE = 0x16161a;
