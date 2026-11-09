@@ -10,8 +10,12 @@ The game needs to be served over http (browsers block loading the images from a 
 From this folder run:
 
 ```bash
-python -m http.server 8080
+python tools/serve.py
 ```
+
+This is a tiny web server that tells browsers to always check for updated game files. (Plain
+`python -m http.server` lets browsers keep old copies of some files, which can mix old and new code
+after an update and freeze the game.)
 
 Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on the same Wi-Fi via your computer's IP address).
 
@@ -62,6 +66,7 @@ assets/env/             ground, ramp, scenery and backdrop art
 art/source/             the original art the game files were cut from
 tools/slice_sprites.py  cuts the truck parts out of the truck art sheet
 tools/slice_env.py      cuts/cleans the ground, ramp and scenery art
+tools/serve.py          local web server with browser caching turned off
 ```
 
 ## Tweaking
