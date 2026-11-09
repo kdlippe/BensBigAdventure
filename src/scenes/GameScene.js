@@ -1,6 +1,7 @@
 import { buildLevel, BOX } from '../level.js';
 import { Truck, WHEEL_R, HALF_BASE } from '../truck.js';
 import { sfx } from '../sound.js';
+import { requestLandscape } from '../device.js';
 import { textStyle } from '../style.js';
 import { addBackdrop, addGround, SKY } from '../scenery.js';
 
@@ -108,14 +109,20 @@ export class GameScene extends Phaser.Scene {
     const total = this.stars.length;
 
     // star counter
-    const panel = this.add.graphics().setScrollFactor(0).setDepth(100);
-    panel.fillStyle(OUTLINE).fillRoundedRect(20, 16, 230, 74, 37);
-    panel.fillStyle(0xffffff).fillRoundedRect(25, 21, 220, 64, 32);
-    this.add.image(62, 53, 'star').setScale(0.6).setScrollFactor(0).setDepth(101);
-    this.starText = this.add.text(100, 53, `0 / ${total}`, textStyle(40, '#c98800'))
-      .setOrigin(0, 0.5)
+    // Size the bubble to the widest the count can get ("44 / 44") in whatever
+    // font actually loaded, so it never spills out (tablets can be slow to load
+    // the cartoon font and fall back to a wider one).
+    this.starText = this.add.text(0, 53, `${total} / ${total}`, textStyle(40, '#c98800'))
+      .setOrigin(0.5, 0.5)
       .setScrollFactor(0)
       .setDepth(101);
+    const textW = Math.ceil(this.starText.width);
+    const inner = 80 + textW + 26;
+    this.starText.setText(`0 / ${total}`).setX(25 + 74 + textW / 2);
+    const panel = this.add.graphics().setScrollFactor(0).setDepth(100);
+    panel.fillStyle(OUTLINE).fillRoundedRect(20, 16, inner + 10, 74, 37);
+    panel.fillStyle(0xffffff).fillRoundedRect(25, 21, inner, 64, 32);
+    this.add.image(62, 53, 'star').setScale(0.6).setScrollFactor(0).setDepth(101);
 
     // progress bar to the finish flag
     const bx = 400;
@@ -377,7 +384,7 @@ export class GameScene extends Phaser.Scene {
           onComplete: () => sp.destroy(),
         });
         this.starText.setText(`${this.starCount} / ${this.stars.length}`);
-        this.tweens.add({ targets: this.starText, scale: 1.25, yoyo: true, duration: 120 });
+        this.tweens.add({ targets: this.starText, scale: 1.15, yoyo: true, duration: 120 });
       }
     }
   }
@@ -436,6 +443,7 @@ export class GameScene extends Phaser.Scene {
     this.tweens.add({ targets: [again, label], scale: '+=0.06', yoyo: true, repeat: -1, duration: 450, delay: 500 });
 
     const restart = () => {
+      requestLandscape();
       sfx.button();
       this.scene.restart();
     };

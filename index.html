@@ -4,6 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#1d3b5a" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
   <title>Ben's Monster Truck Rally</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,15 +23,51 @@
       -webkit-user-select: none;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
     }
     #game { width: 100%; height: 100%; }
     /* make sure the font is fetched before Phaser draws text */
     .font-warmup { font-family: 'Lilita One'; position: absolute; left: -9999px; }
+
+    /* "turn me sideways" screen: only on touch screens held upright */
+    #rotate {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      background: #c3e9f1;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      font-family: 'Lilita One', 'Arial Black', sans-serif;
+      font-size: 44px;
+      color: #ffc928;
+      text-align: center;
+      -webkit-text-stroke: 2px #16161a;
+      paint-order: stroke fill;
+    }
+    #rotate svg { width: 180px; height: 180px; animation: turn 2.2s ease-in-out infinite; }
+    @keyframes turn {
+      0%, 25% { transform: rotate(0deg); }
+      55%, 100% { transform: rotate(-90deg); }
+    }
+    @media (orientation: portrait) and (pointer: coarse) {
+      #rotate { display: flex; }
+    }
   </style>
 </head>
 <body>
   <div class="font-warmup">.</div>
   <div id="game"></div>
+  <div id="rotate">
+    <svg viewBox="0 0 120 120" aria-hidden="true">
+      <rect x="32" y="8" width="56" height="104" rx="10" fill="#1d3b5a" stroke="#16161a" stroke-width="5" />
+      <rect x="39" y="18" width="42" height="80" rx="4" fill="#8fd3f7" />
+      <circle cx="60" cy="105" r="3.5" fill="#c3e9f1" />
+    </svg>
+    <div>Turn me sideways!</div>
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
   <script type="module" src="src/main.js"></script>
 </body>

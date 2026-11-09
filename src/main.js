@@ -1,6 +1,7 @@
 import { BootScene } from './scenes/BootScene.js';
 import { TitleScene } from './scenes/TitleScene.js';
 import { GameScene } from './scenes/GameScene.js';
+import { installTabletHelpers } from './device.js';
 
 async function start() {
   // Wait (briefly) for the cartoon font so the first text isn't drawn in Arial.
@@ -29,4 +30,5 @@ async function start() {
   });
 }
 
+installTabletHelpers();
 start();
