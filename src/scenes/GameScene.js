@@ -167,7 +167,7 @@ export class GameScene extends Phaser.Scene {
     this.progressFill = this.add.graphics().setScrollFactor(0).setDepth(101);
     this.progressBar = { x: bx, w: bw };
     this.add.image(bx + bw + 10, 52, 'flag').setScale(0.22).setScrollFactor(0).setDepth(102).setOrigin(0.1, 0.9);
-    this.progressTruck = this.add.image(bx, 46, 'truck_body').setScale(0.07).setScrollFactor(0).setDepth(103);
+    this.progressTruck = this.add.image(bx, 42, 'truck_icon').setScale(0.19).setScrollFactor(0).setDepth(103);
 
     // race timer (top right)
     const tp = this.add.graphics().setScrollFactor(0).setDepth(100);

@@ -1,4 +1,5 @@
 // Loads the truck art and draws the simple shapes (stars, boxes, buttons...) into textures.
+import { Truck } from '../truck.js';
 
 const SPRITES = ['truck_body', 'wheel', 'strut', 'puff', 'puff2', 'pebble', 'dust', 'sparkle'];
 const ENV_PNG = [
@@ -43,7 +44,20 @@ export class BootScene extends Phaser.Scene {
 
   create() {
     this.makeTextures();
+    this.makeTruckIcon();
     this.scene.start('Title');
+  }
+
+  // A small picture of the whole truck (body, struts and all four wheels) for
+  // the progress bar: build the real truck once and snapshot it into a texture.
+  makeTruckIcon() {
+    const W = 440;
+    const H = 270;
+    const truck = new Truck(this, 0, 0);
+    const rt = this.make.renderTexture({ width: W, height: H }, false);
+    rt.draw(truck.container, 175, 200); // hub midpoint lands here; leaves room for the cab and exhaust
+    rt.saveTexture('truck_icon');
+    truck.container.destroy();
   }
 
   tex(key, w, h, draw) {
