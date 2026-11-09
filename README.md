@@ -10,10 +10,10 @@ The game needs to be served over http (browsers block loading the images from a 
 From this folder run:
 
 ```bash
-python -m http.server 8000
+python -m http.server 8080
 ```
 
-Then open <http://localhost:8000> in a browser (works on a laptop or a tablet on the same Wi-Fi via your computer's IP address).
+Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on the same Wi-Fi via your computer's IP address).
 
 ## Controls
 
