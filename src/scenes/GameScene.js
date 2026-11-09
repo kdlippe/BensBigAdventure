@@ -2,6 +2,7 @@ import { buildLevel, BOX } from '../level.js';
 import { Truck, WHEEL_R, HALF_BASE } from '../truck.js';
 import { sfx } from '../sound.js';
 import { textStyle } from '../style.js';
+import { addBackdrop, addGround, SKY } from '../scenery.js';
 
 // ---- feel knobs (tweak these to make the truck faster, floatier, bouncier) ----
 const GRAVITY = 1500;
@@ -31,15 +32,10 @@ export class GameScene extends Phaser.Scene {
     this.pebbleTimer = 0;
     this.debris = []; // flying things: pebbles, smashed boxes, confetti
 
-    this.cameras.main.setBackgroundColor('#8fd3f7');
+    this.cameras.main.setBackgroundColor(SKY);
     this.cameras.main.setBounds(0, -700, L, 1420);
 
-    this.drawBackground();
-    this.drawGround();
-
-    this.add.image(this.level.finishX, this.level.groundY(this.level.finishX) + 6, 'flag')
-      .setOrigin(0.05, 1)
-      .setDepth(15);
+    this.drawWorld();
 
     this.boxes = this.level.boxes.map((b) => ({
       ...b,
@@ -89,54 +85,23 @@ export class GameScene extends Phaser.Scene {
 
   // ------------------------------------------------------------------ drawing
 
-  drawBackground() {
-    const L = this.level.length;
-    this.add.circle(1110, 110, 62, 0xffd84d).setScrollFactor(0).setDepth(0);
+  drawWorld() {
+    const lv = this.level;
+    this.scrollBackdrop = addBackdrop(this);
+    addGround(this, lv.terrainY, 0, lv.length + 400);
 
-    for (let i = 0; i < 14; i++) {
-      this.add.image(150 + i * 520 + (i % 2) * 140, 70 + (i % 3) * 55, 'cloud')
-        .setScale(0.5 + (i % 3) * 0.15)
-        .setScrollFactor(0.15, 0.05)
-        .setDepth(1);
+    for (const d of lv.decor) {
+      this.add.image(d.x, d.y, d.key).setOrigin(0.5, 1).setScale(d.scale).setFlipX(d.flip).setDepth(d.depth);
     }
 
-    // far hills
-    const far = this.add.graphics().setScrollFactor(0.35, 0.2).setDepth(2);
-    const w = L * 0.35 + 1600;
-    const pts = [];
-    for (let x = 0; x <= w; x += 40) pts.push({ x, y: 430 - 70 * Math.sin(x / 300) - 40 * Math.sin(x / 130 + 2) });
-    pts.push({ x: w, y: 1400 }, { x: 0, y: 1400 });
-    far.fillStyle(0xa8db8f).fillPoints(pts, true);
-
-    // near hills
-    const near = this.add.graphics().setScrollFactor(0.6, 0.4).setDepth(3);
-    const w2 = L * 0.6 + 1600;
-    const pts2 = [];
-    for (let x = 0; x <= w2; x += 40) pts2.push({ x, y: 500 - 50 * Math.sin(x / 220 + 1) - 25 * Math.sin(x / 90) });
-    pts2.push({ x: w2, y: 1400 }, { x: 0, y: 1400 });
-    near.fillStyle(0x7cc36b).fillPoints(pts2, true);
-  }
-
-  drawGround() {
-    const pts = this.level.points;
-    const g = this.add.graphics().setDepth(10);
-    const bottom = 1400;
-
-    // dirt
-    g.fillStyle(0x8b5a2b).fillPoints([...pts, { x: pts[pts.length - 1].x, y: bottom }, { x: 0, y: bottom }], true);
-
-    // pebbles in the dirt
-    const rnd = new Phaser.Math.RandomDataGenerator(['ben']);
-    g.fillStyle(0x6d4320);
-    for (let x = 40; x < this.level.length; x += 70) {
-      const y = this.level.groundY(x) + 45 + rnd.between(0, 120);
-      g.fillEllipse(x + rnd.between(-20, 20), y, rnd.between(12, 26), rnd.between(8, 14));
+    for (const r of lv.ramps) {
+      this.add.image(r.x, lv.terrainY(r.x) + 4, 'ramp').setOrigin(0, 1).setScale(r.scale).setDepth(14);
     }
 
-    // grass strip + thick cartoon outline along the top
-    const grass = pts.map((p) => ({ x: p.x, y: p.y + 22 }));
-    g.fillStyle(0x5cb85c).fillPoints([...pts, ...grass.reverse()], true);
-    g.lineStyle(6, OUTLINE).strokePoints(pts, false);
+    this.add.image(lv.finishX, lv.terrainY(lv.finishX) + 14, 'finish_gate')
+      .setOrigin(0.5, 1)
+      .setScale(0.95)
+      .setDepth(15);
   }
 
   drawHud() {
@@ -267,7 +232,7 @@ export class GameScene extends Phaser.Scene {
     // ---- ramp launch: front wheel driving over a ramp lip gives a big kick ----
     // (the truck may already have lifted off a moment earlier as the front wheel
     // rolls over the edge, so allow a short grace period)
-    if ((t.grounded || t.airTime < 0.15) && t.vx > 150 && t.vy > -300) {
+    if ((t.grounded || t.airTime < 0.6) && t.vx > 150 && t.vy > -RAMP_BOOST) {
       const prevFx = prevX + HALF_BASE * cos;
       for (const r of this.level.ramps) {
         if (prevFx < r.lipX && fx >= r.lipX) {
@@ -338,6 +303,7 @@ export class GameScene extends Phaser.Scene {
     this.checkStars(dt);
     this.updateDebris(dt);
     this.updateHud();
+    this.scrollBackdrop(this.cameras.main.scrollX);
     sfx.engine(t.vx, throttle !== 0);
 
     if (!this.finished && t.x >= this.level.finishX) this.finish();

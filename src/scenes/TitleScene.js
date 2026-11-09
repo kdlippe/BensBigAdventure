@@ -1,6 +1,7 @@
 import { Truck, WHEEL_R } from '../truck.js';
 import { sfx } from '../sound.js';
 import { textStyle } from '../style.js';
+import { addBackdrop, addGround, SKY } from '../scenery.js';
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -8,20 +9,19 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create() {
-    const { width, height } = this.scale;
-    this.cameras.main.setBackgroundColor('#8fd3f7');
+    const { width } = this.scale;
+    this.cameras.main.setBackgroundColor(SKY);
+    addBackdrop(this);
+    const groundY = 560;
+    this.add.image(170, groundY + 30, 'tree').setOrigin(0.5, 1).setScale(0.9).setDepth(8);
+    this.add.image(1110, groundY + 22, 'bush').setOrigin(0.5, 1).setScale(0.4).setDepth(8);
+    this.add.image(1010, groundY + 10, 'tires').setOrigin(0.5, 1).setScale(0.4).setDepth(9);
+    addGround(this, () => groundY, 0, width + 800);
+    this.add.image(330, groundY + 8, 'flower').setOrigin(0.5, 1).setScale(0.24).setDepth(12);
+    this.add.image(880, groundY + 8, 'mushroom').setOrigin(0.5, 1).setScale(0.22).setDepth(12);
 
-    this.add.circle(1120, 110, 60, 0xffd84d);
-    this.add.image(220, 120, 'cloud').setScale(0.8);
-    this.add.image(760, 80, 'cloud').setScale(0.6);
-
-    const g = this.add.graphics();
-    g.fillStyle(0xa8db8f).fillEllipse(300, 560, 900, 260).fillEllipse(1050, 580, 900, 240);
-    g.fillStyle(0x8b5a2b).fillRect(0, 560, width, 160);
-    g.fillStyle(0x5cb85c).fillRect(0, 548, width, 28);
-    g.fillStyle(0x16161a).fillRect(0, 544, width, 6);
-
-    const truck = new Truck(this, width / 2, 548 - WHEEL_R);
+    const truck = new Truck(this, width / 2, groundY - WHEEL_R);
+    truck.container.setDepth(30);
     this.tweens.addCounter({
       from: 0,
       to: Math.PI * 2,
