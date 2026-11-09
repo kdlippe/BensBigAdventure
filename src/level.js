@@ -153,20 +153,26 @@ function placeStars(groundY, terrainY, rand) {
   return stars;
 }
 
-// ---- nitro canisters: one in each stretch of track, at a random spot ----
+// ---- nitro canisters: always NITRO_CANS of them, one in each equal part of
+// the track, at a random spot in that part ----
+export const NITRO_CANS = 3;
+
 function placeNitro(groundY, rand) {
   const cans = [];
   const used = spans([[0, START_X + 400], [FINISH_X - 300, LENGTH], ...rampRanges(), ...stackRanges()]);
-  const stretch = 2200;
-  for (let a = 700; a < FINISH_X - 500; a += stretch) {
-    for (let tries = 0; tries < 20; tries++) {
-      const x = a + rand() * (Math.min(a + stretch, FINISH_X - 400) - 300 - a);
-      if (!used.free(x - 80, x + 80)) continue;
-      const high = rand() < 0.35; // sometimes you have to jump for it
-      cans.push({ x, y: groundY(x) - (high ? JUMP_REACH - 10 : GROUND_REACH + 10) });
-      used.take(x - 80, x + 80);
-      break;
-    }
+  const from = START_X + 400;
+  const to = FINISH_X - 300;
+  const part = (to - from) / NITRO_CANS;
+  for (let i = 0; i < NITRO_CANS; i++) {
+    const a = from + i * part + 80;
+    const b = from + (i + 1) * part - 80;
+    // try random spots first, then sweep the part so we always find one
+    const tries = [...Array(30)].map(() => a + rand() * (b - a));
+    for (let x = a; x <= b; x += 40) tries.push(x);
+    const x = tries.find((t) => used.free(t - 80, t + 80)) ?? (a + b) / 2;
+    const high = rand() < 0.35; // sometimes you have to jump for it
+    cans.push({ x, y: groundY(x) - (high ? JUMP_REACH - 10 : GROUND_REACH + 10) });
+    used.take(x - 80, x + 80);
   }
   return cans;
 }

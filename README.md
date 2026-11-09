@@ -40,7 +40,7 @@ Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on
 ## How it plays
 
 - **Nitro**: you start with 1 charge and can carry up to 3 (the number on the ⚡ button). Each boost drives you
-  forward at nearly double speed for 3 seconds. Red nitro canisters along the track give you more charges;
+  forward at nearly double speed for 3 seconds. There are always 3 red nitro canisters on the track (one in each third), each giving a charge;
   some float high, so you have to jump for them.
 - **Braking**: pressing back while boosting ends the boost and skids the truck smoothly to a stop
   (keep holding it to reverse).
