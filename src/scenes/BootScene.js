@@ -1,6 +1,10 @@
 // Loads the truck art and draws the simple shapes (stars, boxes, buttons...) into textures.
 
 const SPRITES = ['truck_body', 'wheel', 'strut', 'puff', 'puff2', 'pebble', 'dust', 'sparkle'];
+const ENV_PNG = [
+  'grass_strip', 'ramp', 'tuft', 'mushroom', 'rocks', 'flower', 'bush',
+  'fence', 'tree', 'tires', 'finish_gate',
+];
 const OUTLINE = 0x16161a;
 
 function starPoints(cx, cy, outer, inner, n = 5) {
@@ -24,6 +28,9 @@ export class BootScene extends Phaser.Scene {
     this.add.rectangle(width / 2, height / 2, 404, 28).setStrokeStyle(4, 0xffffff);
     this.load.on('progress', (p) => (bar.width = 400 * p));
     for (const key of SPRITES) this.load.image(key, `assets/sprites/${key}.png`);
+    for (const key of ENV_PNG) this.load.image(key, `assets/env/${key}.png`);
+    this.load.image('dirt', 'assets/env/dirt.jpg');
+    this.load.image('background', 'assets/env/background.jpg');
   }
 
   create() {

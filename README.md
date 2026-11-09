@@ -31,18 +31,23 @@ src/main.js             game setup
 src/scenes/BootScene.js loads the truck art, draws stars/boxes/buttons
 src/scenes/TitleScene.js title screen with the GO! button
 src/scenes/GameScene.js the level: driving, jumping, boxes, stars, finish
-src/level.js            level 1 layout: ramps, box stacks, star positions
+src/level.js            level 1 layout: ramps, box stacks, stars, scenery
+src/scenery.js          backdrop, tiled dirt and the bendy grass strip
+src/rampProfile.js      the wooden ramp's curve (generated from the art)
 src/truck.js            the truck drawing (body, wheels, struts)
 src/sound.js            sound effects, generated in code (no audio files)
 assets/sprites/         the truck parts as transparent PNGs
-art/source/             the original art sheet the sprites were cut from
-tools/slice_sprites.py  script that cuts the sprites out of the art sheet
+assets/env/             ground, ramp, scenery and backdrop art
+art/source/             the original art the game files were cut from
+tools/slice_sprites.py  cuts the truck parts out of the truck art sheet
+tools/slice_env.py      cuts/cleans the ground, ramp and scenery art
 ```
 
 ## Tweaking
 
-- **Level layout**: edit `RAMPS`, `BOX_STACKS` and the star helpers in `src/level.js`.
+- **Level layout**: edit `RAMP_DEFS`, `BOX_STACKS`, the star helpers and the scenery section in `src/level.js`.
 - **How the truck feels**: the constants at the top of `src/scenes/GameScene.js`
   (`MAX_SPEED`, `JUMP_SPEED`, `GRAVITY`, `RAMP_BOOST`, suspension `SPRING`/`DAMPING`).
 - **New art**: replace the PNGs in `assets/sprites/` with the same file names. If you get a new
-  art sheet, re-run `python tools/slice_sprites.py` (needs `pip install pillow numpy scipy`).
+  art sheet, re-run `python tools/slice_sprites.py`; for new ground/scenery art, replace the files in
+  `art/source/` and re-run `python tools/slice_env.py` (both need `pip install pillow numpy scipy`).
