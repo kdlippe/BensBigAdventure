@@ -17,6 +17,14 @@ function starPoints(cx, cy, outer, inner, n = 5) {
   return pts;
 }
 
+// lightning bolt centred on (cx, cy), `size` px tall
+function boltPoints(cx, cy, size) {
+  const shape = [
+    [0.58, 0], [0.12, 0.56], [0.44, 0.56], [0.34, 1], [0.88, 0.42], [0.56, 0.42], [0.74, 0],
+  ];
+  return shape.map(([x, y]) => ({ x: cx + (x - 0.5) * size * 0.75, y: cy + (y - 0.5) * size }));
+}
+
 export class BootScene extends Phaser.Scene {
   constructor() {
     super('Boot');
@@ -112,5 +120,33 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0xffffff).fillTriangle(r, r - 42, r - 30, r - 8, r + 30, r - 8);
     });
     button('btn_round', 140, 0xffc928, 0xc98800, () => {});
+    button('btn_nitro', 140, 0xff7043, 0xbf360c, (g, r) => {
+      g.fillStyle(OUTLINE).fillPoints(boltPoints(r - 2, r - 4, 66), true);
+      g.fillStyle(0xffe680).fillPoints(boltPoints(r - 2, r - 4, 52), true);
+    });
+
+    // nitro canister: red tank with a lightning bolt
+    this.tex('nitro', 72, 108, (g) => {
+      g.fillStyle(OUTLINE).fillRoundedRect(24, 0, 24, 20, 5); // valve
+      g.fillStyle(0xb0bec5).fillRoundedRect(28, 4, 16, 14, 3);
+      g.fillStyle(OUTLINE).fillRoundedRect(0, 14, 72, 94, 18);
+      g.fillStyle(0xe53935).fillRoundedRect(5, 19, 62, 84, 14);
+      g.fillStyle(0xff8a80).fillRoundedRect(12, 26, 10, 64, 5); // shine
+      g.fillStyle(0x8e1c17).fillRect(5, 88, 62, 8);
+      g.fillStyle(OUTLINE).fillPoints(boltPoints(38, 58, 60), true);
+      g.fillStyle(0xffe680).fillPoints(boltPoints(38, 58, 46), true);
+    });
+
+    // nitro flame (points left, out of the exhaust)
+    this.tex('flame', 90, 44, (g) => {
+      g.fillStyle(0xff6d00).fillTriangle(0, 22, 60, 2, 60, 42);
+      g.fillStyle(0xff6d00).fillCircle(66, 22, 22);
+      g.fillStyle(0xffd54f).fillTriangle(18, 22, 64, 9, 64, 35);
+      g.fillStyle(0xffd54f).fillCircle(68, 22, 13);
+      g.fillStyle(0xffffff).fillCircle(72, 22, 6);
+    });
+
+    // speed line for the nitro rush
+    this.tex('speedline', 160, 8, (g) => g.fillStyle(0xffffff).fillRoundedRect(0, 0, 160, 8, 4));
   }
 }

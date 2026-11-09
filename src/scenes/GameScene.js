@@ -14,6 +14,15 @@ const RAMP_BOOST = 460; // extra upward kick when driving off a ramp
 const SPRING = 260; // suspension stiffness
 const DAMPING = 13; // suspension damping
 
+// ---- nitro ----
+const NITRO_SPEED = 820; // top speed while boosting
+const NITRO_ACCEL = 1700;
+const NITRO_TIME = 3; // seconds per charge
+const NITRO_MAX = 3; // most charges you can carry
+const NITRO_START = 1; // charges at the start of the level
+
+const BEST_KEY = 'bmtr.best.level1';
+
 const OUTLINE = 0x16161a;
 const CONFETTI_COLOURS = [0xff5252, 0xffc928, 0x4caf50, 0x42a5f5, 0xab47bc, 0xff9800];
 
@@ -32,6 +41,11 @@ export class GameScene extends Phaser.Scene {
     this.puffTimer = 0;
     this.pebbleTimer = 0;
     this.debris = []; // flying things: pebbles, smashed boxes, confetti
+    this.nitro = { charges: NITRO_START, time: 0 };
+    this.flameTimer = 0;
+    this.lineTimer = 0;
+    this.elapsed = 0; // race time in seconds
+    this.timerOn = false; // starts when Ben first drives
 
     this.cameras.main.setBackgroundColor(SKY);
     this.cameras.main.setBounds(0, -700, L, 1420);
@@ -58,8 +72,22 @@ export class GameScene extends Phaser.Scene {
       return { ...s, got: false, img };
     });
 
+    this.cans = this.level.nitro.map((n, i) => {
+      const img = this.add.image(n.x, n.y, 'nitro').setScale(0.8).setDepth(25);
+      this.tweens.add({
+        targets: img,
+        y: n.y - 12,
+        angle: { from: -6, to: 6 },
+        yoyo: true,
+        repeat: -1,
+        duration: 600 + (i % 3) * 90,
+        ease: 'Sine.inOut',
+      });
+      return { ...n, got: false, img };
+    });
+
     // truck state (x = hub midpoint, y = hub height)
-    const startX = 300;
+    const startX = this.level.startX;
     this.t = {
       x: startX,
       y: this.level.groundY(startX) - WHEEL_R,
@@ -134,6 +162,30 @@ export class GameScene extends Phaser.Scene {
     this.progressBar = { x: bx, w: bw };
     this.add.image(bx + bw + 10, 52, 'flag').setScale(0.22).setScrollFactor(0).setDepth(102).setOrigin(0.1, 0.9);
     this.progressTruck = this.add.image(bx, 46, 'truck_body').setScale(0.07).setScrollFactor(0).setDepth(103);
+
+    // race timer (top right)
+    const tp = this.add.graphics().setScrollFactor(0).setDepth(100);
+    tp.fillStyle(OUTLINE).fillRoundedRect(1000, 16, 262, 74, 37);
+    tp.fillStyle(0xffffff).fillRoundedRect(1005, 21, 252, 64, 32);
+    tp.fillStyle(OUTLINE).fillCircle(1044, 53, 22);
+    tp.fillStyle(0x90caf9).fillCircle(1044, 53, 17);
+    tp.lineStyle(4, OUTLINE).lineBetween(1044, 53, 1044, 41).lineBetween(1044, 53, 1053, 57);
+    this.timerText = this.add.text(1158, 53, formatTime(0), textStyle(40, '#1565c0'))
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(101);
+
+    // nitro charges: a number badge on the nitro button
+    const bx2 = this.nitroBtn.x + 52;
+    const by2 = this.nitroBtn.y - 52;
+    const badge = this.add.graphics().setScrollFactor(0).setDepth(113);
+    badge.fillStyle(OUTLINE).fillCircle(bx2, by2, 26);
+    badge.fillStyle(0xffffff).fillCircle(bx2, by2, 21);
+    this.nitroCount = this.add.text(bx2, by2 + 1, String(this.nitro.charges), textStyle(32, '#e53935'))
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(114);
+    this.nitroRing = this.add.graphics().setScrollFactor(0).setDepth(112);
   }
 
   updateHud() {
@@ -141,14 +193,30 @@ export class GameScene extends Phaser.Scene {
     const { x, w } = this.progressBar;
     this.progressFill.clear().fillStyle(0x4caf50).fillRoundedRect(x, 38, Math.max(24, w * p), 24, 12);
     this.progressTruck.x = x + w * p;
+
+    this.timerText.setText(formatTime(this.elapsed));
+
+    const n = this.nitro;
+    if (this.nitroCount.text !== String(n.charges)) this.nitroCount.setText(String(n.charges));
+    if (n.charges > 0 || n.time > 0) this.nitroBtn.clearTint();
+    else this.nitroBtn.setTint(0x9e9e9e); // greyed out when empty
+    this.nitroRing.clear();
+    if (n.time > 0) {
+      const { x: bx, y: by } = this.nitroBtn;
+      this.nitroRing.lineStyle(10, 0xffe680);
+      this.nitroRing.beginPath();
+      this.nitroRing.arc(bx, by, 76, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (n.time / NITRO_TIME));
+      this.nitroRing.strokePath();
+    }
   }
 
   // ------------------------------------------------------------------ input
 
   setupInput() {
-    this.keys = this.input.keyboard.addKeys('LEFT,RIGHT,UP,SPACE,A,D,W');
+    this.keys = this.input.keyboard.addKeys('LEFT,RIGHT,UP,SPACE,A,D,W,SHIFT,N');
     this.touch = { drive: false, back: false };
     this.jumpQueued = false;
+    this.nitroQueued = false;
 
     const hold = (img, flag) => {
       img.setInteractive({ useHandCursor: true });
@@ -180,7 +248,19 @@ export class GameScene extends Phaser.Scene {
     });
     jump.on('pointerup', () => jump.setScale(1));
     jump.on('pointerout', () => jump.setScale(1));
-    this.controls = [drive, back, jump];
+    const nitro = this.add.image(290, height - 92, 'btn_nitro').setScrollFactor(0).setDepth(110);
+    nitro.setInteractive({ useHandCursor: true });
+    nitro.on('pointerdown', () => {
+      this.nitroQueued = true;
+      nitro.setScale(0.92);
+    });
+    nitro.on('pointerup', () => nitro.setScale(1));
+    nitro.on('pointerout', () => nitro.setScale(1));
+    this.nitroBtn = nitro;
+    this.controls = [drive, back, jump, nitro];
+    for (const k of [this.keys.SHIFT, this.keys.N]) {
+      k.on('down', () => (this.nitroQueued = true));
+    }
 
     for (const k of [this.keys.UP, this.keys.SPACE, this.keys.W]) {
       k.on('down', () => (this.jumpQueued = true));
@@ -201,7 +281,33 @@ export class GameScene extends Phaser.Scene {
       else if (this.keys.LEFT.isDown || this.keys.A.isDown || this.touch.back) throttle = -1;
     }
 
-    if (throttle > 0) t.vx = Math.min(MAX_SPEED, t.vx + ACCEL * dt * (t.vx < 0 ? 3 : 1));
+    // ---- nitro: a charge gives NITRO_TIME seconds of full-speed boost ----
+    const n = this.nitro;
+    if (this.nitroQueued) {
+      this.nitroQueued = false;
+      if (!this.finished && n.time <= 0) {
+        if (n.charges > 0) this.startNitro();
+        else {
+          sfx.empty();
+          this.tweens.add({ targets: this.nitroBtn, x: '+=8', yoyo: true, repeat: 2, duration: 40 });
+        }
+      }
+    }
+    if (n.time > 0) {
+      n.time = Math.max(0, n.time - dt);
+      if (!this.finished) throttle = 1; // boosting always drives forward
+    }
+    const boosting = n.time > 0;
+    const topSpeed = boosting ? NITRO_SPEED : MAX_SPEED;
+
+    // ---- timer: starts the first time Ben drives ----
+    if (!this.timerOn && throttle !== 0 && !this.finished) this.timerOn = true;
+    if (this.timerOn && !this.finished) this.elapsed += dt;
+
+    if (throttle > 0) {
+      if (t.vx > topSpeed) t.vx = Math.max(topSpeed, t.vx - 350 * dt); // ease down after a boost
+      else t.vx = Math.min(topSpeed, t.vx + (boosting ? NITRO_ACCEL : ACCEL) * dt * (t.vx < 0 ? 3 : 1));
+    }
     else if (throttle < 0) t.vx = Math.max(-MAX_SPEED * 0.5, t.vx - ACCEL * dt * (t.vx > 0 ? 3 : 1));
     else {
       const drag = (this.finished ? 400 : t.grounded ? 380 : 40) * dt;
@@ -244,7 +350,7 @@ export class GameScene extends Phaser.Scene {
       for (const r of this.level.ramps) {
         if (prevFx < r.lipX && fx >= r.lipX) {
           t.grounded = false;
-          t.vy = -(RAMP_BOOST + t.vx);
+          t.vy = -(RAMP_BOOST + Math.min(t.vx, MAX_SPEED + 150)); // nitro adds a little, not a lot
           t.airTime = 0.2;
           sfx.launch();
         }
@@ -296,7 +402,7 @@ export class GameScene extends Phaser.Scene {
     // ---- suspension & body tilt ----
     t.squashV += (-SPRING * t.squash - DAMPING * t.squashV) * dt;
     t.squash = Phaser.Math.Clamp(t.squash + t.squashV * dt, -16, 26);
-    const targetTilt = t.grounded ? -throttle * 0.045 : 0;
+    const targetTilt = t.grounded ? -throttle * (boosting ? 0.09 : 0.045) : 0;
     t.tilt += (targetTilt - t.tilt) * Math.min(1, 5 * dt);
 
     // ---- draw the truck ----
@@ -306,8 +412,10 @@ export class GameScene extends Phaser.Scene {
     this.truck.spin(moved);
 
     this.effects(dt, throttle, rx);
+    if (boosting) this.nitroEffects(dt);
     this.checkBoxes();
     this.checkStars(dt);
+    this.checkNitro();
     this.updateDebris(dt);
     this.updateHud();
     this.scrollBackdrop(this.cameras.main.scrollX);
@@ -389,8 +497,51 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  startNitro() {
+    const n = this.nitro;
+    n.charges--;
+    n.time = NITRO_TIME;
+    sfx.boost();
+    this.cameras.main.shake(200, 0.005);
+    this.t.squashV -= 120;
+  }
+
+  checkNitro() {
+    const centre = this.truck.toWorld(this.truck.centreLocal.x, this.truck.centreLocal.y);
+    for (const c of this.cans) {
+      if (c.got) continue;
+      const dx = c.img.x - centre.x;
+      const dy = c.img.y - centre.y;
+      if (dx * dx + dy * dy < 115 * 115) {
+        c.got = true;
+        this.nitro.charges = Math.min(NITRO_MAX, this.nitro.charges + 1);
+        sfx.nitroPickup();
+        this.tweens.killTweensOf(c.img);
+        this.tweens.add({
+          targets: c.img,
+          scale: 1.4,
+          alpha: 0,
+          y: c.img.y - 70,
+          duration: 400,
+          onComplete: () => c.img.destroy(),
+        });
+        this.tweens.add({ targets: this.nitroCount, scale: 1.6, yoyo: true, duration: 160 });
+        const sp = this.add.image(c.img.x, c.img.y, 'sparkle').setScale(0.1).setDepth(40).setTint(0xff8a65);
+        this.tweens.add({ targets: sp, scale: 0.8, angle: 90, alpha: 0, duration: 450, onComplete: () => sp.destroy() });
+      }
+    }
+  }
+
   finish() {
     this.finished = true;
+    this.nitro.time = 0;
+    this.newBest = false;
+    this.best = loadBest();
+    if (this.best === null || this.elapsed < this.best) {
+      this.newBest = this.best !== null; // the very first finish just sets the record
+      this.best = this.elapsed;
+      saveBest(this.elapsed);
+    }
     this.touch.drive = this.touch.back = false;
     this.controls.forEach((c) => c.disableInteractive().setAlpha(0.4));
     sfx.fanfare();
@@ -419,16 +570,25 @@ export class GameScene extends Phaser.Scene {
   showWinPanel() {
     const { width } = this.scale;
     const g = this.add.graphics().setScrollFactor(0).setDepth(160);
-    g.fillStyle(OUTLINE).fillRoundedRect(width / 2 - 300, 130, 600, 380, 40);
-    g.fillStyle(0xffffff).fillRoundedRect(width / 2 - 292, 138, 584, 364, 34);
+    g.fillStyle(OUTLINE).fillRoundedRect(width / 2 - 320, 100, 640, 500, 40);
+    g.fillStyle(0xffffff).fillRoundedRect(width / 2 - 312, 108, 624, 484, 34);
 
     const parts = [g];
-    parts.push(this.add.text(width / 2, 205, 'You did it, Ben!', textStyle(64, '#ff7043')).setOrigin(0.5));
-    parts.push(this.add.image(width / 2 - 90, 305, 'star').setScale(1));
-    parts.push(this.add.text(width / 2 - 30, 305, `${this.starCount} / ${this.stars.length}`, textStyle(64, '#ffc928')).setOrigin(0, 0.5));
+    parts.push(this.add.text(width / 2, 170, 'You did it, Ben!', textStyle(64, '#ff7043')).setOrigin(0.5));
+    parts.push(this.add.image(width / 2 - 90, 255, 'star').setScale(0.9));
+    parts.push(this.add.text(width / 2 - 35, 255, `${this.starCount} / ${this.stars.length}`, textStyle(60, '#ffc928')).setOrigin(0, 0.5));
+    parts.push(this.add.text(width / 2, 335, `Time  ${formatTime(this.elapsed)}`, textStyle(56, '#1565c0')).setOrigin(0.5));
+    if (this.newBest) {
+      const nb = this.add.text(width / 2, 403, 'NEW BEST TIME!', textStyle(44, '#43a047')).setOrigin(0.5);
+      parts.push(nb);
+      this.tweens.add({ targets: nb, angle: { from: -3, to: 3 }, yoyo: true, repeat: -1, duration: 300, delay: 400 });
+      sfx.record();
+    } else {
+      parts.push(this.add.text(width / 2, 403, `Best  ${formatTime(this.best)}`, textStyle(36, '#78909c')).setOrigin(0.5));
+    }
 
-    const again = this.add.image(width / 2, 425, 'btn_round').setScale(0.75).setInteractive({ useHandCursor: true });
-    const label = this.add.text(width / 2, 422, 'AGAIN!', textStyle(30)).setOrigin(0.5);
+    const again = this.add.image(width / 2, 500, 'btn_round').setScale(0.75).setInteractive({ useHandCursor: true });
+    const label = this.add.text(width / 2, 497, 'AGAIN!', textStyle(30)).setOrigin(0.5);
     parts.push(again, label);
     parts.forEach((p) => p.setScrollFactor(0).setDepth(161));
     g.setDepth(160);
@@ -485,6 +645,36 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  nitroEffects(dt) {
+    // flames out of both exhaust pipes
+    this.flameTimer -= dt;
+    if (this.flameTimer <= 0) {
+      this.flameTimer = 0.025;
+      const ex = this.truck.exhaustLocal;
+      for (const off of [0, 50]) {
+        const p = this.truck.toWorld(ex.x + off, ex.y + 6);
+        const f = this.add.image(p.x, p.y, 'flame')
+          .setOrigin(0.85, 0.5)
+          .setRotation(this.t.angle + 0.85 + Phaser.Math.FloatBetween(-0.15, 0.15))
+          .setScale(Phaser.Math.FloatBetween(0.5, 0.8))
+          .setDepth(29);
+        this.tweens.add({ targets: f, scale: 0.2, alpha: 0, duration: 160, onComplete: () => f.destroy() });
+      }
+    }
+    // speed lines rushing past
+    this.lineTimer -= dt;
+    if (this.lineTimer <= 0) {
+      this.lineTimer = 0.045;
+      const y = Phaser.Math.Between(120, 560);
+      const l = this.add.image(1300, y, 'speedline')
+        .setScrollFactor(0)
+        .setDepth(90)
+        .setAlpha(0.75)
+        .setScale(Phaser.Math.FloatBetween(0.6, 1.4), 1);
+      this.tweens.add({ targets: l, x: -200, duration: 260, onComplete: () => l.destroy() });
+    }
+  }
+
   pebble(x, y, tint = null) {
     const img = this.add.image(x, y, 'pebble').setScale(Phaser.Math.FloatBetween(0.18, 0.32)).setDepth(31);
     if (tint) img.setTint(tint);
@@ -528,5 +718,29 @@ export class GameScene extends Phaser.Scene {
       }
       return true;
     });
+  }
+}
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds - m * 60;
+  return `${m}:${s.toFixed(1).padStart(4, '0')}`;
+}
+
+// the best time is kept in this browser only (each tablet or laptop has its own)
+function loadBest() {
+  try {
+    const v = parseFloat(window.localStorage.getItem(BEST_KEY));
+    return Number.isFinite(v) ? v : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveBest(seconds) {
+  try {
+    window.localStorage.setItem(BEST_KEY, String(seconds));
+  } catch (e) {
+    /* storage blocked (private browsing): just don't remember it */
   }
 }
