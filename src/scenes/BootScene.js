@@ -2,7 +2,7 @@
 
 const SPRITES = ['truck_body', 'wheel', 'strut', 'puff', 'puff2', 'pebble', 'dust', 'sparkle'];
 const ENV_PNG = [
-  'grass_strip', 'ramp', 'tuft', 'mushroom', 'rocks', 'flower', 'bush',
+  'grass_strip', 'ramp', 'tuft', 'mushroom', 'rocks', 'flower', 'bush', 'flame_jet',
   'fence', 'tree', 'tires', 'finish_gate',
 ];
 const OUTLINE = 0x16161a;
@@ -13,21 +13,6 @@ function starPoints(cx, cy, outer, inner, n = 5) {
     const r = i % 2 === 0 ? outer : inner;
     const a = -Math.PI / 2 + (i * Math.PI) / n;
     pts.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
-  }
-  return pts;
-}
-
-// teardrop with its point at tipX and its round end at baseX, halfH tall each side
-function teardrop(tipX, baseX, cy, halfH) {
-  const pts = [];
-  const mid = (tipX + baseX) / 2;
-  const halfLen = (baseX - tipX) / 2;
-  for (let i = 0; i <= 48; i++) {
-    const t = (i / 48) * Math.PI * 2;
-    pts.push({
-      x: mid - halfLen * Math.cos(t),
-      y: cy + halfH * 1.45 * Math.sin(t) * Math.pow(Math.sin(t / 2), 1.6),
-    });
   }
   return pts;
 }
@@ -150,16 +135,6 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0x8e1c17).fillRect(5, 88, 62, 8);
       g.fillStyle(OUTLINE).fillPoints(boltPoints(38, 58, 60), true);
       g.fillStyle(0xffe680).fillPoints(boltPoints(38, 58, 46), true);
-    });
-
-    // nitro flame jet: cartoon teardrop, tip pointing left, layered from an
-    // outlined red rim to a white-hot core near the pipe (right side)
-    this.tex('flame', 160, 72, (g) => {
-      g.fillStyle(OUTLINE).fillPoints(teardrop(0, 158, 36, 35), true);
-      g.fillStyle(0xff3d00).fillPoints(teardrop(6, 153, 36, 30), true);
-      g.fillStyle(0xff9100).fillPoints(teardrop(26, 148, 36, 23), true);
-      g.fillStyle(0xffd740).fillPoints(teardrop(52, 143, 36, 16), true);
-      g.fillStyle(0xfffde7).fillPoints(teardrop(84, 138, 36, 9), true);
     });
 
     // soft round glow for fire particles (drawn additively, then tinted)

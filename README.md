@@ -59,13 +59,14 @@ src/scenes/GameScene.js the level: driving, jumping, boxes, stars, finish
 src/level.js            level 1 layout: ramps, box stacks, stars, scenery
 src/scenery.js          backdrop, tiled dirt and the bendy grass strip
 src/rampProfile.js      the wooden ramp's curve (generated from the art)
+src/flameArt.js         where the nitro flame leaves the pipe (generated from the art)
 src/truck.js            the truck drawing (body, wheels, struts)
 src/sound.js            sound effects, generated in code (no audio files)
 assets/sprites/         the truck parts as transparent PNGs
 assets/env/             ground, ramp, scenery and backdrop art
 art/source/             the original art the game files were cut from
 tools/slice_sprites.py  cuts the truck parts out of the truck art sheet
-tools/slice_env.py      cuts/cleans the ground, ramp and scenery art
+tools/slice_env.py      cuts/cleans the ground, ramp, scenery and flame art
 tools/serve.py          local web server with browser caching turned off
 ```
 
