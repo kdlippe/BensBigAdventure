@@ -5,30 +5,38 @@
 
 import { RAMP_ART } from './rampProfile.js';
 
-export const LENGTH = 15000;
+// SPREAD stretches the whole level: track length, ramp and box positions and
+// the gaps between stars all grow by it, while the number of ramps, box
+// stacks, stars and canisters stays the same. (1.3 = 30% longer than the
+// original 15000 px level.)
+const SPREAD = 1.3;
+// gaps between star groups: wider than SPREAD alone, so the longer track ends up
+// with about the same number of stars as the original (~56 per game)
+const STAR_GAP = 2.5;
+export const LENGTH = Math.round(15000 * SPREAD);
 const BASE = 560; // ground height on flat parts (y grows downwards)
 const STEP = 8; // ground is sampled every STEP px
 
 // Wooden ramps: `x` is where the ramp starts, `h` is how tall its lip is.
 // Width comes from the ramp art, so taller ramps are also longer.
 const RAMP_DEFS = [
-  { x: 2050, h: 170 },
-  { x: 4000, h: 200 },
-  { x: 6000, h: 180 },
-  { x: 7950, h: 230 },
-  { x: 10200, h: 190 },
-  { x: 12400, h: 240 },
+  { x: 2050 * SPREAD, h: 170 },
+  { x: 4000 * SPREAD, h: 200 },
+  { x: 6000 * SPREAD, h: 180 },
+  { x: 7950 * SPREAD, h: 230 },
+  { x: 10200 * SPREAD, h: 190 },
+  { x: 12400 * SPREAD, h: 240 },
 ];
 
 // Each stack is a list of rows, bottom row first: [3, 2, 1] is a little pyramid.
 const BOX_STACKS = [
-  { x: 1350, rows: [2, 1] },
-  { x: 3050, rows: [3, 2, 1] },
-  { x: 4950, rows: [2, 2] },
-  { x: 6950, rows: [3, 2, 1] },
-  { x: 9050, rows: [3, 3] },
-  { x: 11300, rows: [3, 2, 1] },
-  { x: 13600, rows: [4, 3, 2, 1] },
+  { x: 1350 * SPREAD, rows: [2, 1] },
+  { x: 3050 * SPREAD, rows: [3, 2, 1] },
+  { x: 4950 * SPREAD, rows: [2, 2] },
+  { x: 6950 * SPREAD, rows: [3, 2, 1] },
+  { x: 9050 * SPREAD, rows: [3, 3] },
+  { x: 11300 * SPREAD, rows: [3, 2, 1] },
+  { x: 13600 * SPREAD, rows: [4, 3, 2, 1] },
 ];
 
 export const FINISH_X = LENGTH - 450;
@@ -145,7 +153,7 @@ function placeStars(groundY, terrainY, rand) {
         else add(sx, g - GROUND_REACH - Math.sin((i / (n - 1)) * Math.PI) * 170); // a hop
       }
       used.take(x - 40, end + 40);
-      x = end + between(300, 750);
+      x = end + between(300, 750) * STAR_GAP;
     } else {
       x += 120;
     }

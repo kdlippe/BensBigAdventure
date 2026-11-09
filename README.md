@@ -73,7 +73,9 @@ tools/serve.py          local web server with browser caching turned off
 
 ## Tweaking
 
-- **Level layout**: edit `LENGTH`, `RAMP_DEFS`, `BOX_STACKS`, `placeStars`, `placeNitro` and the scenery section in `src/level.js`.
+- **Level layout**: in `src/level.js`, `SPREAD` stretches the whole level (1.3 = 30% longer) and `STAR_GAP`
+  spaces the stars so their number stays about the same; `RAMP_DEFS`, `BOX_STACKS`, `placeStars`,
+  `placeNitro` and the scenery section set the rest.
 - **How the truck feels**: the constants at the top of `src/scenes/GameScene.js`
   (`MAX_SPEED`, `JUMP_SPEED`, `GRAVITY`, `RAMP_BOOST`, suspension `SPRING`/`DAMPING`, and the `NITRO_*` settings).
 - **New art**: replace the PNGs in `assets/sprites/` with the same file names. If you get a new
