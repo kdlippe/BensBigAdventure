@@ -1,0 +1,14 @@
+{
+  "name": "Ben's Monster Truck Rally",
+  "short_name": "Truck Rally",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#c3e9f1",
+  "theme_color": "#1d3b5a",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

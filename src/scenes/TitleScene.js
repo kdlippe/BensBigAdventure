@@ -1,5 +1,6 @@
 import { Truck, WHEEL_R } from '../truck.js';
 import { sfx } from '../sound.js';
+import { requestLandscape } from '../device.js';
 import { textStyle } from '../style.js';
 import { addBackdrop, addGround, SKY } from '../scenery.js';
 
@@ -41,6 +42,7 @@ export class TitleScene extends Phaser.Scene {
     this.tweens.add({ targets: [play, label], scale: '+=0.08', yoyo: true, repeat: -1, duration: 500 });
 
     const go = () => {
+      requestLandscape();
       sfx.unlock();
       sfx.button();
       this.scene.start('Game');

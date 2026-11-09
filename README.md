@@ -15,6 +15,15 @@ python -m http.server 8080
 
 Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on the same Wi-Fi via your computer's IP address).
 
+## Playing on a tablet
+
+- Open `http://<your-PC's-IP>:8080` in the tablet's browser (both on the same Wi-Fi, and the PC's network set to
+  Private so Windows Firewall lets it through).
+- On Android / Amazon Fire tablets, tapping **GO!** switches to full screen and locks the screen sideways.
+  Use the browser menu's "Add to Home screen" to get an app icon that opens straight into the game.
+- iPad Safari can't lock the screen: use the rotation lock in Control Center. If the tablet is held upright,
+  the game shows a "Turn me sideways!" screen.
+
 ## Controls
 
 | Action | Touch / mouse | Keyboard |
