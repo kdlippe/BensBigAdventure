@@ -93,6 +93,18 @@ class Sfx {
     this.tone(360, 0.6, { type: 'triangle', vol: 0.15, slideTo: 1200, delay: 0.05 });
   }
 
+  squish() {
+    this.tone(620, 0.25, { type: 'square', vol: 0.1, slideTo: 110 });
+    this.noise(0.2, { vol: 0.3, freq: 600 });
+    this.tone(330, 0.3, { type: 'triangle', vol: 0.2, slideTo: 880, delay: 0.12 }); // boing
+  }
+
+  bump() {
+    this.tone(140, 0.2, { vol: 0.4, slideTo: 60 });
+    this.noise(0.12, { vol: 0.25, freq: 500 });
+    [988, 1319].forEach((n, i) => this.tone(n, 0.06, { type: 'square', vol: 0.06, delay: 0.05 + i * 0.07 })); // snip snip
+  }
+
   skid() {
     this.noise(0.35, { vol: 0.18, freq: 900 });
   }

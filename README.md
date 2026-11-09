@@ -44,7 +44,9 @@ Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on
   some float high, so you have to jump for them.
 - **Braking**: pressing back while boosting ends the boost and skids the truck smoothly to a stop
   (keep holding it to reverse).
-- **Stars and canisters** are in new places every time you start, so each run is a little different.
+- **Crabs** (up to 3 per level) scuttle back and forth. Jump and land on one to squish it (and bounce
+  high); drive into one and it pinches you back (and ends a nitro boost).
+- **Stars, canisters and crabs** are in new places every time you start, so each run is a little different.
 - **Timer** starts when you first drive and stops at the finish. Every star you miss adds 5 seconds
   to your total time (`MISSED_STAR_PENALTY` in `src/scenes/GameScene.js`). The best time is remembered in that browser
   (each tablet or laptop keeps its own).
@@ -62,12 +64,13 @@ src/scenery.js          backdrop, tiled dirt and the bendy grass strip
 src/rampProfile.js      the wooden ramp's curve (generated from the art)
 src/flameArt.js         where the nitro flame leaves the pipe (generated from the art)
 src/truck.js            the truck drawing (body, wheels, struts)
+src/crab.js             the crab enemy: walking animation and squish
 src/sound.js            sound effects, generated in code (no audio files)
 assets/sprites/         the truck parts as transparent PNGs
 assets/env/             ground, ramp, scenery and backdrop art
 art/source/             the original art the game files were cut from
 tools/slice_sprites.py  cuts the truck parts out of the truck art sheet
-tools/slice_env.py      cuts/cleans the ground, ramp, scenery and flame art
+tools/slice_env.py      cuts/cleans the ground, ramp, scenery, flame and crab art
 tools/serve.py          local web server with browser caching turned off
 ```
 

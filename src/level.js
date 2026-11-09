@@ -185,6 +185,36 @@ function placeNitro(groundY, rand) {
   return cans;
 }
 
+// ---- crabs: up to MAX_CRABS, one in each equal part of the track, each
+// walking back and forth over its own patch of ground ----
+export const MAX_CRABS = 3;
+const CRAB_PATROL = 360; // how far each crab walks back and forth
+
+function placeCrabs(rand, nitro) {
+  const crabs = [];
+  const used = spans([
+    [0, START_X + 900], // give Ben a moment before the first crab
+    [FINISH_X - 400, LENGTH],
+    ...rampRanges().map(([a, b]) => [a - 150, b + 350]), // not on ramps or where you land
+    ...stackRanges(),
+    ...nitro.map((n) => [n.x - 120, n.x + 120]),
+  ]);
+  const from = START_X + 900;
+  const to = FINISH_X - 400;
+  const part = (to - from) / MAX_CRABS;
+  for (let i = 0; i < MAX_CRABS; i++) {
+    const a = from + i * part;
+    const b = from + (i + 1) * part - CRAB_PATROL;
+    const tries = [...Array(30)].map(() => a + rand() * (b - a));
+    for (let x = a; x <= b; x += 50) tries.push(x);
+    const start = tries.find((t) => used.free(t - 100, t + CRAB_PATROL + 100));
+    if (start === undefined) continue; // no room in this part: one crab fewer
+    crabs.push({ x: start + rand() * CRAB_PATROL, minX: start, maxX: start + CRAB_PATROL });
+    used.take(start - 100, start + CRAB_PATROL + 100);
+  }
+  return crabs;
+}
+
 export function buildLevel(rand = Math.random) {
   const terrain = []; // the dirt + grass (drawn)
   const surface = []; // what the wheels drive on (terrain + ramps)
@@ -247,6 +277,8 @@ export function buildLevel(rand = Math.random) {
     put(key, x, s * (0.85 + scenery() * 0.3), 12, 8);
   }
 
+  const nitro = placeNitro(groundY, rand);
+
   return {
     length: LENGTH,
     finishX: FINISH_X,
@@ -256,7 +288,8 @@ export function buildLevel(rand = Math.random) {
     points,
     boxes,
     stars: placeStars(groundY, terrainY, rand),
-    nitro: placeNitro(groundY, rand),
+    nitro,
+    crabs: placeCrabs(rand, nitro),
     decor,
     ramps: RAMPS.map((r) => ({ x: r.x, lipX: r.lipX, scale: r.scale, height: r.h })),
   };
