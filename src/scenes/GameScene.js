@@ -4,6 +4,7 @@ import { sfx } from '../sound.js';
 import { requestLandscape } from '../device.js';
 import { textStyle } from '../style.js';
 import { addBackdrop, addGround, SKY } from '../scenery.js';
+import { FLAME_ART } from '../flameArt.js';
 
 // ---- feel knobs (tweak these to make the truck faster, floatier, bouncier) ----
 const GRAVITY = 1500;
@@ -23,6 +24,7 @@ const NITRO_START = 1; // charges at the start of the level
 
 const BRAKE = 700; // how hard reverse slows you down from nitro speed
 const FLAME_DIR = 0.95; // flames shoot up and back from the pipes (radians from straight back)
+const FLAME_LENGTH = 150; // how long a nitro flame jet is, in game px
 const FIRE_COLOURS = [0xffffff, 0xfff176, 0xffb300, 0xff6d00, 0xd50000];
 
 const BEST_KEY = 'bmtr.best.level1';
@@ -680,7 +682,10 @@ export class GameScene extends Phaser.Scene {
   // Two flame jets (one per exhaust pipe) plus a stream of fire particles
   // that cool from white -> yellow -> orange -> red as they fly off.
   makeFire() {
-    this.jets = [0, 1].map(() => this.add.image(0, 0, 'flame').setOrigin(0.93, 0.5).setDepth(29).setVisible(false));
+    this.jets = [0, 1].map(() =>
+      this.add.image(0, 0, 'flame_jet').setOrigin(FLAME_ART.originX, FLAME_ART.originY).setDepth(29).setVisible(false)
+    );
+    this.jetScale = FLAME_LENGTH / FLAME_ART.width;
     this.fireAngle = 0;
     this.fire = this.add.particles(0, 0, 'flare', {
       emitting: false,
@@ -706,7 +711,8 @@ export class GameScene extends Phaser.Scene {
       this.jets[i]
         .setPosition(p.x, p.y)
         .setRotation(dir + Phaser.Math.FloatBetween(-0.08, 0.08))
-        .setScale(Phaser.Math.FloatBetween(0.7, 1.05), Phaser.Math.FloatBetween(0.55, 0.75));
+        .setScale(this.jetScale * Phaser.Math.FloatBetween(0.8, 1.1), this.jetScale * Phaser.Math.FloatBetween(0.85, 1.05))
+        .setFlipY(Math.random() < 0.5); // flipping the art each frame makes it flicker
       this.fire.emitParticleAt(p.x, p.y, 2);
     });
   }
