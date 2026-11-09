@@ -38,6 +38,8 @@ Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on
 - **Nitro**: you start with 1 charge and can carry up to 3 (the number on the ⚡ button). Each boost drives you
   forward at nearly double speed for 3 seconds. Red nitro canisters along the track give you more charges;
   some float high, so you have to jump for them.
+- **Braking**: pressing back while boosting ends the boost and skids the truck smoothly to a stop
+  (keep holding it to reverse).
 - **Stars and canisters** are in new places every time you start, so each run is a little different.
 - **Timer** starts when you first drive and stops at the finish. The best time is remembered in that browser
   (each tablet or laptop keeps its own).

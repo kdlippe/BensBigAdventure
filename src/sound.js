@@ -93,6 +93,10 @@ class Sfx {
     this.tone(360, 0.6, { type: 'triangle', vol: 0.15, slideTo: 1200, delay: 0.05 });
   }
 
+  skid() {
+    this.noise(0.35, { vol: 0.18, freq: 900 });
+  }
+
   empty() {
     this.tone(220, 0.12, { type: 'square', vol: 0.06 });
     this.tone(165, 0.18, { type: 'square', vol: 0.06, delay: 0.1 });

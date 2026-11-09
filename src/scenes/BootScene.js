@@ -17,6 +17,21 @@ function starPoints(cx, cy, outer, inner, n = 5) {
   return pts;
 }
 
+// teardrop with its point at tipX and its round end at baseX, halfH tall each side
+function teardrop(tipX, baseX, cy, halfH) {
+  const pts = [];
+  const mid = (tipX + baseX) / 2;
+  const halfLen = (baseX - tipX) / 2;
+  for (let i = 0; i <= 48; i++) {
+    const t = (i / 48) * Math.PI * 2;
+    pts.push({
+      x: mid - halfLen * Math.cos(t),
+      y: cy + halfH * 1.45 * Math.sin(t) * Math.pow(Math.sin(t / 2), 1.6),
+    });
+  }
+  return pts;
+}
+
 // lightning bolt centred on (cx, cy), `size` px tall
 function boltPoints(cx, cy, size) {
   const shape = [
@@ -137,14 +152,26 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0xffe680).fillPoints(boltPoints(38, 58, 46), true);
     });
 
-    // nitro flame (points left, out of the exhaust)
-    this.tex('flame', 90, 44, (g) => {
-      g.fillStyle(0xff6d00).fillTriangle(0, 22, 60, 2, 60, 42);
-      g.fillStyle(0xff6d00).fillCircle(66, 22, 22);
-      g.fillStyle(0xffd54f).fillTriangle(18, 22, 64, 9, 64, 35);
-      g.fillStyle(0xffd54f).fillCircle(68, 22, 13);
-      g.fillStyle(0xffffff).fillCircle(72, 22, 6);
+    // nitro flame jet: cartoon teardrop, tip pointing left, layered from an
+    // outlined red rim to a white-hot core near the pipe (right side)
+    this.tex('flame', 160, 72, (g) => {
+      g.fillStyle(OUTLINE).fillPoints(teardrop(0, 158, 36, 35), true);
+      g.fillStyle(0xff3d00).fillPoints(teardrop(6, 153, 36, 30), true);
+      g.fillStyle(0xff9100).fillPoints(teardrop(26, 148, 36, 23), true);
+      g.fillStyle(0xffd740).fillPoints(teardrop(52, 143, 36, 16), true);
+      g.fillStyle(0xfffde7).fillPoints(teardrop(84, 138, 36, 9), true);
     });
+
+    // soft round glow for fire particles (drawn additively, then tinted)
+    const flare = this.textures.createCanvas('flare', 64, 64);
+    const ctx = flare.getContext();
+    const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(255,255,255,1)');
+    grad.addColorStop(0.35, 'rgba(255,255,255,0.75)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 64, 64);
+    flare.refresh();
 
     // speed line for the nitro rush
     this.tex('speedline', 160, 8, (g) => g.fillStyle(0xffffff).fillRoundedRect(0, 0, 160, 8, 4));
