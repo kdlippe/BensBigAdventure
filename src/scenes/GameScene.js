@@ -27,7 +27,10 @@ const FLAME_DIR = 0.95; // flames shoot up and back from the pipes (radians from
 const FLAME_LENGTH = 150; // how long a nitro flame jet is, in game px
 const FIRE_COLOURS = [0xffffff, 0xfff176, 0xffb300, 0xff6d00, 0xd50000];
 
-const BEST_KEY = 'bmtr.best.level1';
+const MISSED_STAR_PENALTY = 5; // seconds added to your time for each star you didn't collect
+
+// Changing this key starts everyone's best time fresh (v2: times now include the missed-star penalty)
+const BEST_KEY = 'bmtr.best.level1.v2';
 
 const OUTLINE = 0x16161a;
 const CONFETTI_COLOURS = [0xff5252, 0xffc928, 0x4caf50, 0x42a5f5, 0xab47bc, 0xff9800];
@@ -200,7 +203,7 @@ export class GameScene extends Phaser.Scene {
     this.progressFill.clear().fillStyle(0x4caf50).fillRoundedRect(x, 38, Math.max(24, w * p), 24, 12);
     this.progressTruck.x = x + w * p;
 
-    this.timerText.setText(formatTime(this.elapsed));
+    this.timerText.setText(formatTime(this.finished ? this.totalTime : this.elapsed));
 
     const n = this.nitro;
     if (this.nitroCount.text !== String(n.charges)) this.nitroCount.setText(String(n.charges));
@@ -554,12 +557,15 @@ export class GameScene extends Phaser.Scene {
   finish() {
     this.finished = true;
     this.nitro.time = 0;
+    this.missed = this.stars.length - this.starCount;
+    this.penalty = this.missed * MISSED_STAR_PENALTY;
+    this.totalTime = this.elapsed + this.penalty;
     this.newBest = false;
     this.best = loadBest();
-    if (this.best === null || this.elapsed < this.best) {
+    if (this.best === null || this.totalTime < this.best) {
       this.newBest = this.best !== null; // the very first finish just sets the record
-      this.best = this.elapsed;
-      saveBest(this.elapsed);
+      this.best = this.totalTime;
+      saveBest(this.totalTime);
     }
     this.touch.drive = this.touch.back = false;
     this.controls.forEach((c) => c.disableInteractive().setAlpha(0.4));
@@ -589,25 +595,32 @@ export class GameScene extends Phaser.Scene {
   showWinPanel() {
     const { width } = this.scale;
     const g = this.add.graphics().setScrollFactor(0).setDepth(160);
-    g.fillStyle(OUTLINE).fillRoundedRect(width / 2 - 320, 100, 640, 500, 40);
-    g.fillStyle(0xffffff).fillRoundedRect(width / 2 - 312, 108, 624, 484, 34);
+    g.fillStyle(OUTLINE).fillRoundedRect(width / 2 - 330, 80, 660, 560, 40);
+    g.fillStyle(0xffffff).fillRoundedRect(width / 2 - 322, 88, 644, 544, 34);
 
     const parts = [g];
-    parts.push(this.add.text(width / 2, 170, 'You did it, Ben!', textStyle(64, '#ff7043')).setOrigin(0.5));
-    parts.push(this.add.image(width / 2 - 90, 255, 'star').setScale(0.9));
-    parts.push(this.add.text(width / 2 - 35, 255, `${this.starCount} / ${this.stars.length}`, textStyle(60, '#ffc928')).setOrigin(0, 0.5));
-    parts.push(this.add.text(width / 2, 335, `Time  ${formatTime(this.elapsed)}`, textStyle(56, '#1565c0')).setOrigin(0.5));
+    parts.push(this.add.text(width / 2, 145, 'You did it, Ben!', textStyle(60, '#ff7043')).setOrigin(0.5));
+    parts.push(this.add.image(width / 2 - 90, 220, 'star').setScale(0.8));
+    parts.push(this.add.text(width / 2 - 40, 220, `${this.starCount} / ${this.stars.length}`, textStyle(54, '#ffc928')).setOrigin(0, 0.5));
+
+    // drive time + missed-star penalty = total
+    parts.push(this.add.text(width / 2, 285, `Drive time  ${formatTime(this.elapsed)}`, textStyle(34, '#546e7a')).setOrigin(0.5));
+    const penaltyText = this.missed > 0
+      ? `+${this.penalty} sec for ${this.missed} missed star${this.missed === 1 ? '' : 's'}`
+      : 'All the stars! No time added';
+    parts.push(this.add.text(width / 2, 330, penaltyText, textStyle(30, this.missed > 0 ? '#e53935' : '#43a047')).setOrigin(0.5));
+    parts.push(this.add.text(width / 2, 392, `Total  ${formatTime(this.totalTime)}`, textStyle(56, '#1565c0')).setOrigin(0.5));
     if (this.newBest) {
-      const nb = this.add.text(width / 2, 403, 'NEW BEST TIME!', textStyle(44, '#43a047')).setOrigin(0.5);
+      const nb = this.add.text(width / 2, 455, 'NEW BEST TIME!', textStyle(42, '#43a047')).setOrigin(0.5);
       parts.push(nb);
       this.tweens.add({ targets: nb, angle: { from: -3, to: 3 }, yoyo: true, repeat: -1, duration: 300, delay: 400 });
       sfx.record();
     } else {
-      parts.push(this.add.text(width / 2, 403, `Best  ${formatTime(this.best)}`, textStyle(36, '#78909c')).setOrigin(0.5));
+      parts.push(this.add.text(width / 2, 455, `Best  ${formatTime(this.best)}`, textStyle(34, '#78909c')).setOrigin(0.5));
     }
 
-    const again = this.add.image(width / 2, 500, 'btn_round').setScale(0.75).setInteractive({ useHandCursor: true });
-    const label = this.add.text(width / 2, 497, 'AGAIN!', textStyle(30)).setOrigin(0.5);
+    const again = this.add.image(width / 2, 555, 'btn_round').setScale(0.7).setInteractive({ useHandCursor: true });
+    const label = this.add.text(width / 2, 552, 'AGAIN!', textStyle(28)).setOrigin(0.5);
     parts.push(again, label);
     parts.forEach((p) => p.setScrollFactor(0).setDepth(161));
     g.setDepth(160);

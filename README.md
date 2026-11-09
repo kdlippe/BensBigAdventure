@@ -45,7 +45,8 @@ Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on
 - **Braking**: pressing back while boosting ends the boost and skids the truck smoothly to a stop
   (keep holding it to reverse).
 - **Stars and canisters** are in new places every time you start, so each run is a little different.
-- **Timer** starts when you first drive and stops at the finish. The best time is remembered in that browser
+- **Timer** starts when you first drive and stops at the finish. Every star you miss adds 5 seconds
+  to your total time (`MISSED_STAR_PENALTY` in `src/scenes/GameScene.js`). The best time is remembered in that browser
   (each tablet or laptop keeps its own).
 
 ## Project layout
