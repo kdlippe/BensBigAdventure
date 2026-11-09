@@ -1,9 +1,11 @@
 // Level 1 layout. Everything is measured in game pixels; the screen is 1280x720.
-// To change the level, edit RAMPS / BOX_STACKS / the star helpers below.
+// To change the level, edit RAMP_DEFS / BOX_STACKS below. Stars and nitro
+// canisters are placed at random every time a level starts (see placeStars /
+// placeNitro); the scenery is random too but always the same (fixed seed).
 
 import { RAMP_ART } from './rampProfile.js';
 
-export const LENGTH = 9800;
+export const LENGTH = 15000;
 const BASE = 560; // ground height on flat parts (y grows downwards)
 const STEP = 8; // ground is sampled every STEP px
 
@@ -14,6 +16,8 @@ const RAMP_DEFS = [
   { x: 4000, h: 200 },
   { x: 6000, h: 180 },
   { x: 7950, h: 230 },
+  { x: 10200, h: 190 },
+  { x: 12400, h: 240 },
 ];
 
 // Each stack is a list of rows, bottom row first: [3, 2, 1] is a little pyramid.
@@ -22,11 +26,20 @@ const BOX_STACKS = [
   { x: 3050, rows: [3, 2, 1] },
   { x: 4950, rows: [2, 2] },
   { x: 6950, rows: [3, 2, 1] },
-  { x: 8700, rows: [4, 3, 2, 1] },
+  { x: 9050, rows: [3, 3] },
+  { x: 11300, rows: [3, 2, 1] },
+  { x: 13600, rows: [4, 3, 2, 1] },
 ];
 
 export const FINISH_X = LENGTH - 450;
 export const BOX = 80;
+const START_X = 300;
+
+// How high above the ground things float. The truck grabs anything within
+// reach of its body: GROUND_REACH is collected just by driving past,
+// JUMP_REACH needs a jump.
+const GROUND_REACH = 110;
+const JUMP_REACH = 290;
 
 const RAMPS = RAMP_DEFS.map((r) => {
   const scale = r.h / RAMP_ART.lipHeight;
@@ -69,7 +82,7 @@ function hillHeight(x) {
 }
 
 // tiny deterministic random numbers so the scenery is the same every game
-function rng(seed) {
+function seeded(seed) {
   let s = seed;
   return () => {
     s = (s * 1664525 + 1013904223) % 4294967296;
@@ -77,7 +90,88 @@ function rng(seed) {
   };
 }
 
-export function buildLevel() {
+// a set of x ranges that are already used, so things don't pile up
+function spans(initial) {
+  const list = initial.map(([a, b]) => [a, b]);
+  return {
+    free: (a, b) => list.every(([c, d]) => b < c || a > d),
+    take: (a, b) => list.push([a, b]),
+  };
+}
+
+const stackRanges = () => BOX_STACKS.map((s) => [s.x - 30, s.x + s.rows[0] * BOX + 30]);
+const rampRanges = () => RAMPS.map((r) => [r.x - 40, r.backX + 40]);
+
+// ---- stars: new places every game ----
+function placeStars(groundY, terrainY, rand) {
+  const stars = [];
+  const add = (x, y) => stars.push({ x, y });
+  const between = (a, b) => a + rand() * (b - a);
+  const used = spans([[0, START_X + 250], [FINISH_X - 150, LENGTH], ...rampRanges(), ...stackRanges()]);
+
+  // an arc that follows the jump off most ramps
+  for (const r of RAMPS) {
+    if (rand() < 0.25) continue;
+    const lipY = terrainY(r.lipX) - r.h;
+    const n = 3 + Math.floor(rand() * 3);
+    const gap = 85 + rand() * 25;
+    for (let i = 1; i <= n; i++) {
+      const t = (i * gap) / 420;
+      add(r.lipX + 30 + i * gap, lipY - 150 - 880 * t + 0.5 * 1500 * t * t);
+    }
+    used.take(r.backX, r.lipX + 60 + (n + 1) * gap);
+  }
+
+  // some box stacks get a star floating on top
+  for (const s of BOX_STACKS) {
+    if (rand() < 0.4) continue;
+    const cx = s.x + (s.rows[0] * BOX) / 2;
+    add(cx, groundY(cx) - s.rows.length * BOX - 90);
+  }
+
+  // fill the rest of the track with little patterns
+  let x = START_X + 300;
+  while (x < FINISH_X - 300) {
+    const kind = rand();
+    const n = kind < 0.5 ? 3 + Math.floor(rand() * 3) : kind < 0.75 ? 2 : 4;
+    const gap = 80;
+    const end = x + (n - 1) * gap;
+    if (used.free(x - 40, end + 40)) {
+      for (let i = 0; i < n; i++) {
+        const sx = x + i * gap;
+        const g = groundY(sx);
+        if (kind < 0.5) add(sx, g - GROUND_REACH - rand() * 15); // a row on the ground
+        else if (kind < 0.75) add(sx, g - JUMP_REACH + i * 10); // a high pair: jump!
+        else add(sx, g - GROUND_REACH - Math.sin((i / (n - 1)) * Math.PI) * 170); // a hop
+      }
+      used.take(x - 40, end + 40);
+      x = end + between(300, 750);
+    } else {
+      x += 120;
+    }
+  }
+  return stars;
+}
+
+// ---- nitro canisters: one in each stretch of track, at a random spot ----
+function placeNitro(groundY, rand) {
+  const cans = [];
+  const used = spans([[0, START_X + 400], [FINISH_X - 300, LENGTH], ...rampRanges(), ...stackRanges()]);
+  const stretch = 2200;
+  for (let a = 700; a < FINISH_X - 500; a += stretch) {
+    for (let tries = 0; tries < 20; tries++) {
+      const x = a + rand() * (Math.min(a + stretch, FINISH_X - 400) - 300 - a);
+      if (!used.free(x - 80, x + 80)) continue;
+      const high = rand() < 0.35; // sometimes you have to jump for it
+      cans.push({ x, y: groundY(x) - (high ? JUMP_REACH - 10 : GROUND_REACH + 10) });
+      used.take(x - 80, x + 80);
+      break;
+    }
+  }
+  return cans;
+}
+
+export function buildLevel(rand = Math.random) {
   const terrain = []; // the dirt + grass (drawn)
   const surface = []; // what the wheels drive on (terrain + ramps)
   for (let x = 0; x <= LENGTH + STEP; x += STEP) {
@@ -110,52 +204,16 @@ export function buildLevel() {
     });
   }
 
-  // ---- stars ----
-  const stars = [];
-  const addStar = (x, y) => stars.push({ x, y });
-
-  // a welcome row right at the start
-  for (let i = 0; i < 5; i++) addStar(650 + i * 80, groundY(650 + i * 80) - 110);
-
-  // an arc of stars that follows the jump off each ramp
-  for (const r of RAMPS) {
-    const lipY = terrainY(r.lipX) - r.h;
-    for (let i = 1; i <= 5; i++) {
-      const t = (i * 95) / 420;
-      addStar(r.lipX + 30 + i * 95, lipY - 150 - 880 * t + 0.5 * 1500 * t * t);
-    }
-  }
-
-  // a star floating over each box stack (jump or crash through to get it)
-  for (const s of BOX_STACKS) {
-    const cx = s.x + (s.rows[0] * BOX) / 2;
-    addStar(cx, groundY(cx) - s.rows.length * BOX - 90);
-  }
-
-  // stars sitting on the bumpy hills
-  for (const x of [2620, 2740, 2860, 3700, 5450, 5570, 5690, 6650, 7450, 7570]) {
-    addStar(x, groundY(x) - 100);
-  }
-
-  // a final row before the finish flag
-  for (let i = 0; i < 4; i++) addStar(FINISH_X - 420 + i * 90, groundY(FINISH_X - 420 + i * 90) - 110);
-
-  // ---- scenery ----
-  const busy = [
-    [-1, 160],
-    [FINISH_X - 200, FINISH_X + 200],
-    ...RAMPS.map((r) => [r.x - 40, r.backX + 40]),
-    ...BOX_STACKS.map((s) => [s.x - 30, s.x + s.rows[0] * BOX + 30]),
-  ];
-  const free = (x, pad = 0) => busy.every(([a, b]) => x + pad < a || x - pad > b);
-  const rand = rng(7);
+  // ---- scenery (same every game) ----
+  const scenery = seeded(7);
+  const busy = spans([[-1, 160], [FINISH_X - 200, FINISH_X + 200], ...rampRanges(), ...stackRanges()]);
   const decor = [];
   const put = (key, x, scale, depth, sink = 6) =>
-    decor.push({ key, x, y: terrainY(x) + sink, scale, depth, flip: rand() < 0.5 });
+    decor.push({ key, x, y: terrainY(x) + sink, scale, depth, flip: scenery() < 0.5 });
 
   // behind the track: trees, bushes and fences
-  for (let x = 250; x < LENGTH; x += 700 + rand() * 600) put('tree', x, 0.75 + rand() * 0.25, 8, 30);
-  for (let x = 500; x < LENGTH; x += 450 + rand() * 500) put('bush', x, 0.3 + rand() * 0.1, 8, 22);
+  for (let x = 250; x < LENGTH; x += 700 + scenery() * 600) put('tree', x, 0.75 + scenery() * 0.25, 8, 30);
+  for (let x = 500; x < LENGTH; x += 450 + scenery() * 500) put('bush', x, 0.3 + scenery() * 0.1, 8, 22);
   for (const x of [120, 330, FINISH_X + 260, FINISH_X + 470]) put('fence', x, 0.42, 8, 22);
 
   // tyre stacks guarding each ramp, like a real monster truck arena
@@ -169,20 +227,22 @@ export function buildLevel() {
     ['mushroom', 0.2],
     ['rocks', 0.2],
   ];
-  for (let x = 200; x < LENGTH - 100; x += 150 + rand() * 220) {
-    if (!free(x, 40)) continue;
-    const [key, s] = small[Math.floor(rand() * small.length)];
-    put(key, x, s * (0.85 + rand() * 0.3), 12, 8);
+  for (let x = 200; x < LENGTH - 100; x += 150 + scenery() * 220) {
+    if (!busy.free(x - 40, x + 40)) continue;
+    const [key, s] = small[Math.floor(scenery() * small.length)];
+    put(key, x, s * (0.85 + scenery() * 0.3), 12, 8);
   }
 
   return {
     length: LENGTH,
     finishX: FINISH_X,
+    startX: START_X,
     groundY,
     terrainY,
     points,
     boxes,
-    stars,
+    stars: placeStars(groundY, terrainY, rand),
+    nitro: placeNitro(groundY, rand),
     decor,
     ramps: RAMPS.map((r) => ({ x: r.x, lipX: r.lipX, scale: r.scale, height: r.h })),
   };

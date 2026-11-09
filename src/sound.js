@@ -82,6 +82,26 @@ class Sfx {
     this.tone(160, 0.12, { type: 'square', vol: 0.08, slideTo: 70 });
   }
 
+  nitroPickup() {
+    [523, 784, 1047].forEach((n, i) => this.tone(n, 0.14, { type: 'square', vol: 0.08, delay: i * 0.07 }));
+    this.tone(1568, 0.3, { type: 'triangle', vol: 0.18, delay: 0.21 });
+  }
+
+  boost() {
+    this.noise(0.9, { vol: 0.35, freq: 2500 });
+    this.tone(180, 0.8, { type: 'sawtooth', vol: 0.08, slideTo: 720 });
+    this.tone(360, 0.6, { type: 'triangle', vol: 0.15, slideTo: 1200, delay: 0.05 });
+  }
+
+  empty() {
+    this.tone(220, 0.12, { type: 'square', vol: 0.06 });
+    this.tone(165, 0.18, { type: 'square', vol: 0.06, delay: 0.1 });
+  }
+
+  record() {
+    [784, 988, 1175, 1568].forEach((n, i) => this.tone(n, 0.2, { type: 'triangle', vol: 0.2, delay: 1.1 + i * 0.1 }));
+  }
+
   button() {
     this.tone(520, 0.1, { type: 'triangle', vol: 0.2, slideTo: 780 });
   }
