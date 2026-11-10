@@ -39,8 +39,8 @@ export class TitleScene extends Phaser.Scene {
     const title = this.add.text(width / 2, 90, "Ben's Monster Truck Rally", textStyle(76, '#ffc928')).setOrigin(0.5);
     this.tweens.add({ targets: title, scale: 1.04, yoyo: true, repeat: -1, duration: 700, ease: 'Sine.inOut' });
 
-    // the meadow tune (only once sound is allowed, i.e. after the first tap)
-    if (sfx.ctx) music.play('meadow');
+    // the title screen is quiet: the music starts again with the next level
+    music.stop();
 
     let started = false;
     const start = (level) => {
