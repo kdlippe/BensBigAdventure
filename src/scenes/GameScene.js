@@ -209,6 +209,7 @@ export class GameScene extends Phaser.Scene {
     const home = this.add.image(homeX, 53, 'btn_home').setScrollFactor(0).setDepth(110).setInteractive({ useHandCursor: true });
     home.on('pointerdown', () => {
       sfx.button();
+      music.stop(); // quiet on the title screen; the next level starts it again
       this.scene.start('Title');
     });
     this.homeBtn = home;
@@ -221,7 +222,8 @@ export class GameScene extends Phaser.Scene {
     bar.fillStyle(0xffffff).fillRoundedRect(bx, 38, bw, 24, 12);
     this.progressFill = this.add.graphics().setScrollFactor(0).setDepth(101);
     this.progressBar = { x: bx, w: bw };
-    this.add.image(bx + bw + 10, 52, 'flag').setScale(0.22).setScrollFactor(0).setDepth(102).setOrigin(0.1, 0.9);
+    // pole stands just below the bar; its top lines up with the other bubbles, clear of the screen edge
+    this.add.image(bx + bw + 10, 74, 'flag').setScale(0.2).setScrollFactor(0).setDepth(102).setOrigin(0.1, 1);
     this.progressTruck = this.add.image(bx, 42, 'truck_icon').setScale(0.19).setScrollFactor(0).setDepth(103);
 
     // race timer (top right)
