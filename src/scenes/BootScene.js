@@ -160,24 +160,6 @@ export class BootScene extends Phaser.Scene {
     pill('pill_blue', 0x42a5f5, 0x1565c0);
     pill('pill_orange', 0xff9800, 0xe65100);
 
-    // music on / off buttons: an eighth note, crossed out when off
-    const note = (g, colour) => {
-      g.fillStyle(colour).fillEllipse(23, 40, 16, 12).fillEllipse(39, 36, 16, 12);
-      g.fillRect(27, 16, 5, 25).fillRect(43, 12, 5, 25);
-      g.fillPoints([{ x: 27, y: 16 }, { x: 48, y: 11 }, { x: 48, y: 18 }, { x: 27, y: 23 }], true);
-    };
-    this.tex('btn_music', 56, 56, (g) => {
-      g.fillStyle(OUTLINE).fillCircle(28, 28, 28);
-      g.fillStyle(0xffffff).fillCircle(28, 28, 23);
-      note(g, 0x7e57c2);
-    });
-    this.tex('btn_music_off', 56, 56, (g) => {
-      g.fillStyle(OUTLINE).fillCircle(28, 28, 28);
-      g.fillStyle(0xffffff).fillCircle(28, 28, 23);
-      note(g, 0xb0bec5);
-      g.lineStyle(6, 0xe53935).lineBetween(12, 12, 44, 44);
-    });
-
     // small home button (back to the title screen)
     this.tex('btn_home', 64, 64, (g) => {
       g.fillStyle(OUTLINE).fillCircle(32, 32, 32);

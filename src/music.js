@@ -3,13 +3,12 @@
 // string pad, punchy drums, and the trademark echo. Three original songs, one
 // per level look. Nothing is loaded from files.
 //
-// music.play('meadow' | 'spooky' | 'desert'), music.stop(), music.toggleMute()
+// music.play('meadow' | 'spooky' | 'desert'), music.stop(), music.duck()
 // It shares the sound effects' AudioContext, so call it after sfx.unlock().
 
 import { sfx } from './sound.js';
 
 const VOLUME = 0.55; // overall music level (the sound effects stay louder)
-const MUTE_KEY = 'bmtr.music';
 const LOOKAHEAD = 0.15; // schedule notes this far ahead (seconds)
 
 // ---------------------------------------------------------------- the songs
@@ -148,11 +147,6 @@ class Music {
   constructor() {
     this.name = null;
     this.timer = null;
-    try {
-      this.muted = window.localStorage.getItem(MUTE_KEY) === 'off';
-    } catch (e) {
-      this.muted = false;
-    }
   }
 
   // build the mixer (lazily, once the AudioContext exists)
@@ -162,7 +156,7 @@ class Music {
     if (this.out) return true;
     this.ctx = ctx;
     this.out = ctx.createGain();
-    this.out.gain.value = this.muted ? 0 : VOLUME;
+    this.out.gain.value = VOLUME;
     this.out.connect(sfx.master);
     // the 16-bit echo: a feedback delay mixed in quietly
     this.echo = ctx.createDelay(1);
@@ -212,26 +206,11 @@ class Music {
 
   // dip the music for a moment (e.g. under the finish fanfare)
   duck(seconds = 2.5) {
-    if (!this.out || this.muted) return;
+    if (!this.out) return;
     const t = this.ctx.currentTime;
     this.out.gain.cancelScheduledValues(t);
     this.out.gain.setTargetAtTime(VOLUME * 0.25, t, 0.05);
     this.out.gain.setTargetAtTime(VOLUME, t + seconds, 0.4);
-  }
-
-  toggleMute() {
-    this.muted = !this.muted;
-    try {
-      window.localStorage.setItem(MUTE_KEY, this.muted ? 'off' : 'on');
-    } catch (e) {
-      /* storage blocked */
-    }
-    if (this.out) {
-      const t = this.ctx.currentTime;
-      this.out.gain.cancelScheduledValues(t);
-      this.out.gain.setTargetAtTime(this.muted ? 0 : VOLUME, t, 0.05);
-    }
-    return this.muted;
   }
 
   // ---- instruments
@@ -373,20 +352,3 @@ class Music {
 }
 
 export const music = new Music();
-
-// A small round 🎵 button that turns the music on and off (remembered).
-export function musicButton(scene, x, y) {
-  const btn = scene.add.image(x, y, music.muted ? 'btn_music_off' : 'btn_music')
-    .setScrollFactor(0)
-    .setDepth(110)
-    .setInteractive({ useHandCursor: true });
-  btn.on('pointerdown', () => {
-    sfx.unlock();
-    const muted = music.toggleMute();
-    btn.setTexture(muted ? 'btn_music_off' : 'btn_music');
-    btn.setScale(0.9);
-  });
-  btn.on('pointerup', () => btn.setScale(1));
-  btn.on('pointerout', () => btn.setScale(1));
-  return btn;
-}

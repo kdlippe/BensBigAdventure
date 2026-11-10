@@ -2,7 +2,7 @@ import { buildLevel, BOX, PIT_BOTTOM } from '../level.js';
 import { loadProgress, saveProgress, loadBest, saveBest } from '../progress.js';
 import { Truck, WHEEL_R, HALF_BASE } from '../truck.js';
 import { sfx } from '../sound.js';
-import { music, musicButton } from '../music.js';
+import { music } from '../music.js';
 import { requestLandscape } from '../device.js';
 import { textStyle, pillButton } from '../style.js';
 import { addBackdrop, addGround, addPit, skyFor, THEME_SCENERY } from '../scenery.js';
@@ -212,7 +212,6 @@ export class GameScene extends Phaser.Scene {
       this.scene.start('Title');
     });
     this.homeBtn = home;
-    musicButton(this, 965, 53);
 
     // progress bar to the finish flag
     const bx = 440;

@@ -44,7 +44,7 @@ Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on
   **NEW GAME** or carries on from the level you reached, and the 🏠 button goes back to the title.
 - **Music**: an original 16-bit (SNES-style) tune for each look - bouncy for the meadow (and the title
   screen), music-box spooky for the graveyard, a cowboy trot for the desert - made in code
-  (`src/music.js`). The 🎵 button turns it on and off (remembered).
+  (`src/music.js`). It always plays.
 - **Three looks**: levels 1–2 are a sunny meadow; levels 3–4 are a spooky graveyard at night (moon,
   tombstones, pumpkins, a pumpkin arch at the finish); level 5 is a desert canyon at sunset (cactuses,
   a T-rex skull, fossils in the dirt, a canyon arch at the finish). Set per level with `theme` in `src/level.js`.

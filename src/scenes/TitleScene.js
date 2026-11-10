@@ -1,6 +1,6 @@
 import { Truck, WHEEL_R } from '../truck.js';
 import { sfx } from '../sound.js';
-import { music, musicButton } from '../music.js';
+import { music } from '../music.js';
 import { requestLandscape } from '../device.js';
 import { textStyle, pillButton } from '../style.js';
 import { loadProgress, saveProgress } from '../progress.js';
@@ -41,7 +41,6 @@ export class TitleScene extends Phaser.Scene {
 
     // the meadow tune (only once sound is allowed, i.e. after the first tap)
     if (sfx.ctx) music.play('meadow');
-    musicButton(this, width - 50, 48);
 
     let started = false;
     const start = (level) => {
