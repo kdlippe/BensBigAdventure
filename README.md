@@ -4,6 +4,12 @@
 Drive over bumpy hills, launch off ramps, smash cardboard boxes, grab nitro canisters for speed boosts, and collect gold
 stars on the way to the finish gate. No game over: you can't fail, only have fun. A timer lets you chase your best time.
 
+**Play it online: https://kdlippe.github.io/BensBigAdventure/**
+
+| Level 1: the meadow | Level 3: the spooky graveyard |
+|---|---|
+| ![Level 1: the monster truck parked on the grass in the sunny meadow, with a tire stack and a wooden ramp ahead](docs/screenshots/level1.jpg) | ![Level 3: the truck parked in the graveyard at night, with a spider dangling ahead among the stars](docs/screenshots/level3.jpg) |
+
 ## Play it
 
 The game needs to be served over http (browsers block loading the images from a plain file).
@@ -68,6 +74,14 @@ Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on
   to your total time (`MISSED_STAR_PENALTY` in `src/scenes/GameScene.js`). Each level's best time is remembered in that
   browser (each tablet or laptop keeps its own).
 
+## Publishing
+
+Every push to `main` publishes the game to GitHub Pages
+(`.github/workflows/pages.yml`). The workflow runs `tools/build_site.py`, which copies the game
+into `_site/` and stamps every code file and picture with the commit's version; `index.html`
+reads `version.txt` fresh on each visit and loads that version, so after an update browsers
+never mix old and new files (which can freeze the game).
+
 ## Project layout
 
 ```
@@ -94,6 +108,8 @@ art/source/             the original art the game files were cut from
 tools/slice_sprites.py  cuts the truck parts out of the truck art sheet
 tools/slice_env.py      cuts/cleans the ground, ramp, scenery (all themes), flame, crab, spider, snake and button art
 tools/serve.py          local web server with browser caching turned off
+tools/build_site.py     builds the published site with version-stamped files
+docs/screenshots/       screenshots used in this README
 ```
 
 ## Tweaking
