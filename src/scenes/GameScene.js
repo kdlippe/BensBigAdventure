@@ -1,9 +1,10 @@
-import { buildLevel, BOX } from '../level.js';
+import { buildLevel, BOX, PIT_BOTTOM } from '../level.js';
+import { loadProgress, saveProgress, loadBest, saveBest } from '../progress.js';
 import { Truck, WHEEL_R, HALF_BASE } from '../truck.js';
 import { sfx } from '../sound.js';
 import { requestLandscape } from '../device.js';
-import { textStyle } from '../style.js';
-import { addBackdrop, addGround, SKY } from '../scenery.js';
+import { textStyle, pillButton } from '../style.js';
+import { addBackdrop, addGround, addPit, SKY } from '../scenery.js';
 import { FLAME_ART } from '../flameArt.js';
 import { Crab, CRAB_HALF_WIDTH } from '../crab.js';
 
@@ -30,8 +31,7 @@ const FIRE_COLOURS = [0xffffff, 0xfff176, 0xffb300, 0xff6d00, 0xd50000];
 
 const MISSED_STAR_PENALTY = 5; // seconds added to your time for each star you didn't collect
 
-// Changing this key starts everyone's best time fresh (v2: times now include the missed-star penalty)
-const BEST_KEY = 'bmtr.best.level1.v2';
+
 
 const OUTLINE = 0x16161a;
 const CONFETTI_COLOURS = [0xff5252, 0xffc928, 0x4caf50, 0x42a5f5, 0xab47bc, 0xff9800];
@@ -41,8 +41,10 @@ export class GameScene extends Phaser.Scene {
     super('Game');
   }
 
-  create() {
-    this.level = buildLevel();
+  create(data) {
+    this.levelNum = (data && data.level) || loadProgress();
+    this.level = buildLevel(this.levelNum);
+    this.failed = false;
     const L = this.level.length;
     this.finished = false;
     this.starCount = 0;
@@ -130,7 +132,13 @@ export class GameScene extends Phaser.Scene {
   drawWorld() {
     const lv = this.level;
     this.scrollBackdrop = addBackdrop(this);
-    addGround(this, lv.terrainY, 0, lv.length + 400);
+    let from = 0;
+    for (const p of lv.pits) {
+      addGround(this, lv.terrainY, from, p.x0);
+      addPit(this, p.x0, p.x1, lv.terrainY(p.x0));
+      from = p.x1;
+    }
+    addGround(this, lv.terrainY, from, lv.length + 400);
 
     for (const d of lv.decor) {
       this.add.image(d.x, d.y, d.key).setOrigin(0.5, 1).setScale(d.scale).setFlipX(d.flip).setDepth(d.depth);
@@ -164,6 +172,21 @@ export class GameScene extends Phaser.Scene {
     panel.fillStyle(OUTLINE).fillRoundedRect(20, 16, inner + 10, 74, 37);
     panel.fillStyle(0xffffff).fillRoundedRect(25, 21, inner, 64, 32);
     this.add.image(62, 53, 'star').setScale(0.6).setScrollFactor(0).setDepth(101);
+
+    // which level (under the progress bar) and a home button (back to the title)
+    const pill = this.add.graphics().setScrollFactor(0).setDepth(100);
+    pill.fillStyle(OUTLINE).fillRoundedRect(560, 72, 170, 44, 22);
+    pill.fillStyle(0xff7043).fillRoundedRect(564, 76, 162, 36, 18);
+    this.add.text(645, 93, `LEVEL ${this.levelNum}`, textStyle(28))
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(101);
+    const home = this.add.image(300, 53, 'btn_home').setScrollFactor(0).setDepth(110).setInteractive({ useHandCursor: true });
+    home.on('pointerdown', () => {
+      sfx.button();
+      this.scene.start('Title');
+    });
+    this.homeBtn = home;
 
     // progress bar to the finish flag
     const bx = 400;
@@ -289,7 +312,7 @@ export class GameScene extends Phaser.Scene {
 
     // ---- throttle ----
     let throttle = 0;
-    if (!this.finished) {
+    if (!this.finished && !t.inPit) {
       if (this.keys.RIGHT.isDown || this.keys.D.isDown || this.touch.drive) throttle = 1;
       else if (this.keys.LEFT.isDown || this.keys.A.isDown || this.touch.back) throttle = -1;
     }
@@ -349,15 +372,20 @@ export class GameScene extends Phaser.Scene {
     const cos = Math.cos(t.angle);
     const rx = t.x - HALF_BASE * cos;
     const fx = t.x + HALF_BASE * cos;
-    const yR = ground(rx) - WHEEL_R;
-    const yF = ground(fx) - WHEEL_R;
+    // Over a pit a wheel has nothing under it. If only one wheel is over the
+    // pit, the other one holds the truck up; with both over it, it falls.
+    const sR = this.level.isPit(rx) ? null : ground(rx);
+    const sF = this.level.isPit(fx) ? null : ground(fx);
+    const overPit = sR === null && sF === null;
+    const yR = (t.inPit || overPit ? PIT_BOTTOM : sR ?? sF) - WHEEL_R;
+    const yF = (t.inPit || overPit ? PIT_BOTTOM : sF ?? sR) - WHEEL_R;
     const groundHubY = (yR + yF) / 2;
     const groundAngle = Math.atan2(yF - yR, fx - rx);
 
     // ---- jumping ----
     if (this.jumpQueued) {
       this.jumpQueued = false;
-      if ((t.grounded || t.airTime < 0.12) && !this.finished) {
+      if ((t.grounded || t.airTime < 0.12) && !this.finished && !t.inPit) {
         t.grounded = false;
         t.airTime = 0.2;
         t.vy = -JUMP_SPEED;
@@ -423,6 +451,15 @@ export class GameScene extends Phaser.Scene {
           if (impact > 800) this.cameras.main.shake(120, 0.006);
         }
       }
+    }
+
+    if (!t.inPit && overPit && !t.grounded && t.y > this.level.surfaceY(t.x) - WHEEL_R + 20) {
+      t.inPit = true; // too low to reach the other side: down we go
+      this.nitro.time = 0;
+    }
+    if (t.inPit) {
+      t.vx *= Math.pow(0.02, dt); // slide to a stop against the pit walls
+      if (!this.failed && t.y > this.level.surfaceY(t.x) + 260) this.fail();
     }
 
     this.updateCrabs(dt, time, prevBottom);
@@ -610,14 +647,16 @@ export class GameScene extends Phaser.Scene {
     this.penalty = this.missed * MISSED_STAR_PENALTY;
     this.totalTime = this.elapsed + this.penalty;
     this.newBest = false;
-    this.best = loadBest();
+    this.best = loadBest(this.levelNum);
     if (this.best === null || this.totalTime < this.best) {
       this.newBest = this.best !== null; // the very first finish just sets the record
       this.best = this.totalTime;
-      saveBest(this.totalTime);
+      saveBest(this.levelNum, this.totalTime);
     }
+    if (this.levelNum < this.level.count) saveProgress(Math.max(loadProgress(), this.levelNum + 1));
     this.touch.drive = this.touch.back = false;
     this.controls.forEach((c) => c.disableInteractive().setAlpha(0.4));
+    this.homeBtn.disableInteractive();
     sfx.fanfare();
 
     const { width } = this.scale;
@@ -648,7 +687,11 @@ export class GameScene extends Phaser.Scene {
     g.fillStyle(0xffffff).fillRoundedRect(width / 2 - 322, 88, 644, 544, 34);
 
     const parts = [g];
-    parts.push(this.add.text(width / 2, 145, 'You did it, Ben!', textStyle(60, '#ff7043')).setOrigin(0.5));
+    const last = this.levelNum >= this.level.count;
+    const heading = last ? 'You beat all 5 levels, Ben!' : `Level ${this.levelNum} done, Ben!`;
+    const head = this.add.text(width / 2, 145, heading, textStyle(56, '#ff7043')).setOrigin(0.5);
+    if (head.width > 600) head.setScale(600 / head.width);
+    parts.push(head);
     parts.push(this.add.image(width / 2 - 90, 220, 'star').setScale(0.8));
     parts.push(this.add.text(width / 2 - 40, 220, `${this.starCount} / ${this.stars.length}`, textStyle(54, '#ffc928')).setOrigin(0, 0.5));
 
@@ -668,29 +711,65 @@ export class GameScene extends Phaser.Scene {
       parts.push(this.add.text(width / 2, 455, `Best  ${formatTime(this.best)}`, textStyle(34, '#78909c')).setOrigin(0.5));
     }
 
-    const again = this.add.image(width / 2, 555, 'btn_round').setScale(0.7).setInteractive({ useHandCursor: true });
-    const label = this.add.text(width / 2, 552, 'AGAIN!', textStyle(28)).setOrigin(0.5);
-    parts.push(again, label);
     parts.forEach((p) => p.setScrollFactor(0).setDepth(161));
     g.setDepth(160);
 
     g.setAlpha(0);
     this.tweens.add({ targets: g, alpha: 1, duration: 250 });
     parts.slice(1).forEach((p) => {
-      const s = p.scale;
+      const sc = p.scale;
       p.setScale(0.2);
-      this.tweens.add({ targets: p, scale: s, duration: 400, ease: 'Back.out' });
+      this.tweens.add({ targets: p, scale: sc, duration: 400, ease: 'Back.out' });
     });
-    this.tweens.add({ targets: [again, label], scale: '+=0.06', yoyo: true, repeat: -1, duration: 450, delay: 500 });
 
-    const restart = () => {
+    // buttons: NEXT LEVEL (or NEW GAME after the last level) and AGAIN
+    let busy = false;
+    const go = (level) => {
+      if (busy) return;
+      busy = true;
       requestLandscape();
       sfx.button();
-      this.scene.restart();
+      if (last && level === 1) saveProgress(1);
+      this.scene.restart({ level });
     };
-    again.on('pointerdown', restart);
-    this.input.keyboard.once('keydown-SPACE', restart);
-    this.input.keyboard.once('keydown-ENTER', restart);
+    const primaryLevel = last ? 1 : this.levelNum + 1;
+    const primary = pillButton(this, width / 2 + 120, 560, 'pill_green', last ? 'NEW GAME' : 'NEXT LEVEL', () => go(primaryLevel), { scale: 0.8 });
+    const again = pillButton(this, width / 2 - 140, 560, 'pill_blue', 'AGAIN', () => go(this.levelNum), { scale: 0.62, fontSize: 32 });
+    [...primary.parts, ...again.parts].forEach((p) => p.setDepth(162));
+    this.tweens.add({ targets: primary.parts, scale: '+=0.05', yoyo: true, repeat: -1, duration: 450, delay: 500 });
+    this.input.keyboard.once('keydown-ENTER', () => go(primaryLevel));
+  }
+
+  // Fell in a pit: try the level again.
+  fail() {
+    this.failed = true;
+    this.finished = true; // stops the timer and the controls
+    this.totalTime = this.elapsed;
+    this.touch.drive = this.touch.back = false;
+    this.controls.forEach((c) => c.disableInteractive().setAlpha(0.4));
+    sfx.fall();
+    this.time.delayedCall(500, () => {
+      const { width } = this.scale;
+      const g = this.add.graphics().setScrollFactor(0).setDepth(160);
+      g.fillStyle(OUTLINE).fillRoundedRect(width / 2 - 300, 180, 600, 330, 40);
+      g.fillStyle(0xffffff).fillRoundedRect(width / 2 - 292, 188, 584, 314, 34);
+      const t1 = this.add.text(width / 2, 260, 'Oops! Into the pit!', textStyle(54, '#ff7043')).setOrigin(0.5);
+      const t2 = this.add.text(width / 2, 330, 'Jump over the hole next time', textStyle(30, '#546e7a')).setOrigin(0.5);
+      [t1, t2].forEach((o) => o.setScrollFactor(0).setDepth(161));
+      let busy = false;
+      const retry = () => {
+        if (busy) return;
+        busy = true;
+        requestLandscape();
+        sfx.button();
+        this.scene.restart({ level: this.levelNum });
+      };
+      const btn = pillButton(this, width / 2, 430, 'pill_green', 'TRY AGAIN', retry, { scale: 0.85 });
+      btn.parts.forEach((o) => o.setDepth(162));
+      this.tweens.add({ targets: btn.parts, scale: '+=0.05', yoyo: true, repeat: -1, duration: 450 });
+      this.input.keyboard.once('keydown-ENTER', retry);
+      this.input.keyboard.once('keydown-SPACE', retry);
+    });
   }
 
   // ------------------------------------------------------------------ effects
@@ -855,22 +934,4 @@ function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
   const s = seconds - m * 60;
   return `${m}:${s.toFixed(1).padStart(4, '0')}`;
-}
-
-// the best time is kept in this browser only (each tablet or laptop has its own)
-function loadBest() {
-  try {
-    const v = parseFloat(window.localStorage.getItem(BEST_KEY));
-    return Number.isFinite(v) ? v : null;
-  } catch (e) {
-    return null;
-  }
-}
-
-function saveBest(seconds) {
-  try {
-    window.localStorage.setItem(BEST_KEY, String(seconds));
-  } catch (e) {
-    /* storage blocked (private browsing): just don't remember it */
-  }
 }

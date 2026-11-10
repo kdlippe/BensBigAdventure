@@ -135,6 +135,28 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0xffffff).fillTriangle(r, r - 42, r - 30, r - 8, r + 30, r - 8);
     });
     button('btn_round', 140, 0xffc928, 0xc98800, () => {});
+
+    // pill buttons (menus): 320x96
+    const pill = (key, fill, ring) =>
+      this.tex(key, 320, 96, (g) => {
+        g.fillStyle(OUTLINE).fillRoundedRect(0, 0, 320, 96, 48);
+        g.fillStyle(ring).fillRoundedRect(6, 6, 308, 84, 42);
+        g.fillStyle(fill).fillRoundedRect(12, 9, 296, 72, 36);
+      });
+    pill('pill_green', 0x4caf50, 0x2e7d32);
+    pill('pill_blue', 0x42a5f5, 0x1565c0);
+    pill('pill_orange', 0xff9800, 0xe65100);
+
+    // small home button (back to the title screen)
+    this.tex('btn_home', 64, 64, (g) => {
+      g.fillStyle(OUTLINE).fillCircle(32, 32, 32);
+      g.fillStyle(0xffffff).fillCircle(32, 32, 27);
+      g.fillStyle(OUTLINE).fillTriangle(32, 13, 13, 31, 51, 31);
+      g.fillStyle(OUTLINE).fillRect(18, 30, 28, 20);
+      g.fillStyle(0xff7043).fillTriangle(32, 18, 19, 30, 45, 30);
+      g.fillStyle(0xff7043).fillRect(22, 30, 20, 16);
+      g.fillStyle(OUTLINE).fillRect(29, 37, 7, 13);
+    });
     button('btn_nitro', 140, 0xff7043, 0xbf360c, (g, r) => {
       g.fillStyle(OUTLINE).fillPoints(boltPoints(r - 2, r - 4, 66), true);
       g.fillStyle(0xffe680).fillPoints(boltPoints(r - 2, r - 4, 52), true);

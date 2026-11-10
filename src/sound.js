@@ -105,6 +105,12 @@ class Sfx {
     [988, 1319].forEach((n, i) => this.tone(n, 0.06, { type: 'square', vol: 0.06, delay: 0.05 + i * 0.07 })); // snip snip
   }
 
+  fall() {
+    this.tone(880, 1.0, { type: 'triangle', vol: 0.2, slideTo: 140 }); // whistle down...
+    this.tone(90, 0.4, { vol: 0.4, slideTo: 40, delay: 0.95 }); // ...bonk
+    this.noise(0.3, { vol: 0.25, freq: 400, delay: 0.95 });
+  }
+
   skid() {
     this.noise(0.35, { vol: 0.18, freq: 900 });
   }
