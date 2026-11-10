@@ -47,11 +47,25 @@ export function addGround(scene, groundAt, x0, x1) {
   const shift = (0.5 - GRASS_CONTACT) * GRASS_H; // rope runs through the strip's middle
   const N = 32;
   for (let sx = x0; sx < x1; sx += GRASS_W) {
+    const w = Math.min(GRASS_W, x1 - sx); // the last strip stops exactly at x1 (e.g. a pit edge)
     const points = [];
     for (let i = 0; i <= N; i++) {
-      const dx = (i / N) * GRASS_W;
+      const dx = (i / N) * w;
       points.push({ x: dx, y: groundAt(sx + dx) + shift });
     }
     scene.add.rope(sx, 0, 'grass_strip', null, points, true).setDepth(11);
   }
+}
+
+// A pit: a dark hole in the ground between x0 and x1, with dirt walls.
+export function addPit(scene, x0, x1, rimY) {
+  const g = scene.add.graphics().setDepth(10);
+  const top = rimY + 30;
+  g.fillStyle(0x1b1009).fillRect(x0, top, x1 - x0, BOTTOM - top);
+  // walls a bit lighter, fading into the dark
+  g.fillStyle(0x5a3a20).fillRect(x0, top, 18, BOTTOM - top).fillRect(x1 - 18, top, 18, BOTTOM - top);
+  g.fillStyle(0x3a2414).fillRect(x0 + 18, top, 14, BOTTOM - top).fillRect(x1 - 32, top, 14, BOTTOM - top);
+  // a shadowy lip under the grass
+  g.fillStyle(0x2b1a0e).fillRect(x0, top, x1 - x0, 26);
+  g.lineStyle(6, 0x16161a).lineBetween(x0, rimY + 10, x0, BOTTOM).lineBetween(x1, rimY + 10, x1, BOTTOM);
 }

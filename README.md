@@ -39,6 +39,12 @@ Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on
 
 ## How it plays
 
+- **5 levels**, each longer than the last, with 20, 30, 40, 50 and 60 stars. The level you're on shows
+  under the progress bar. Finishing a level unlocks the next (**NEXT LEVEL**); the title screen offers
+  **NEW GAME** or carries on from the level you reached, and the 🏠 button goes back to the title.
+- **Pits** (as wide as the truck): level 3 has 1 and level 4 has 2, each with a ramp right before it to
+  fly over; level 5 has 3 with no ramps, so you jump yourself (a little arc of stars shows where).
+  Fall in and you start the level again.
 - **Nitro**: you start with 1 charge and can carry up to 3 (the number on the ⚡ button). Each boost drives you
   forward at nearly double speed for 3 seconds. There are always 3 red nitro canisters on the track (one in each third), each giving a charge;
   some float high, so you have to jump for them.
@@ -48,8 +54,8 @@ Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on
   high); drive into one and it pinches you back (and ends a nitro boost).
 - **Stars, canisters and crabs** are in new places every time you start, so each run is a little different.
 - **Timer** starts when you first drive and stops at the finish. Every star you miss adds 5 seconds
-  to your total time (`MISSED_STAR_PENALTY` in `src/scenes/GameScene.js`). The best time is remembered in that browser
-  (each tablet or laptop keeps its own).
+  to your total time (`MISSED_STAR_PENALTY` in `src/scenes/GameScene.js`). Each level's best time is remembered in that
+  browser (each tablet or laptop keeps its own).
 
 ## Project layout
 
@@ -57,9 +63,10 @@ Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on
 index.html              page that loads Phaser (from a CDN) and the game
 src/main.js             game setup
 src/scenes/BootScene.js loads the truck art, draws stars/boxes/buttons
-src/scenes/TitleScene.js title screen with the GO! button
+src/scenes/TitleScene.js title screen: GO! / NEW GAME / keep going
 src/scenes/GameScene.js the level: driving, jumping, boxes, stars, finish
-src/level.js            level 1 layout: ramps, box stacks, stars, scenery
+src/level.js            the 5 levels: ramps, box stacks, pits, stars, canisters, crabs, scenery
+src/progress.js         level reached and best time per level (saved in the browser)
 src/scenery.js          backdrop, tiled dirt and the bendy grass strip
 src/rampProfile.js      the wooden ramp's curve (generated from the art)
 src/flameArt.js         where the nitro flame leaves the pipe (generated from the art)
@@ -76,9 +83,9 @@ tools/serve.py          local web server with browser caching turned off
 
 ## Tweaking
 
-- **Level layout**: in `src/level.js`, `SPREAD` stretches the whole level (1.3 = 30% longer) and `STAR_GAP`
-  spaces the stars so their number stays about the same; `RAMP_DEFS`, `BOX_STACKS`, `placeStars`,
-  `placeNitro` and the scenery section set the rest.
+- **Levels**: the `LEVELS` table at the top of `src/level.js` sets each level's stars (exact count),
+  length, number of ramps, box stacks, pits (and whether they have ramps) and crabs. Each level's
+  layout is random but the same every time you play it; stars, canisters and crabs move every play.
 - **How the truck feels**: the constants at the top of `src/scenes/GameScene.js`
   (`MAX_SPEED`, `JUMP_SPEED`, `GRAVITY`, `RAMP_BOOST`, suspension `SPRING`/`DAMPING`, and the `NITRO_*` settings).
 - **New art**: replace the PNGs in `assets/sprites/` with the same file names. If you get a new
