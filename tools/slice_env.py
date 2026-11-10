@@ -73,10 +73,8 @@ SPIDER = {  # in spider.png: (x0, y0, x1, y1, keep only the biggest piece?)
     "spider_thread": (446, 58, 532, 696, True),
     "spider_dizzy": (546, 120, 1010, 404, False),  # squished spider + its stars and spirals
 }
-RATTLE_CUT = 156  # row in the trimmed rattle where the bulb ends and the tail stub starts
 SNAKE = {  # in snake.png: (x0, y0, x1, y1, keep only the biggest piece?)
     "snake_body": (40, 37, 507, 452, True),  # coiled, head (with bandana) on the left
-    "snake_rattle": (82, 463, 233, 707, True),  # the motion lines are dropped; the game shakes it
     "snake_dizzy": (559, 120, 1005, 420, False),  # squished snake + its stars and spirals
 }
 CRAB = {  # in crab.png: (x0, y0, x1, y1, keep only the biggest piece?)
@@ -261,19 +259,13 @@ def main():
     # rattlesnake enemy parts (desert level)
     src = load("snake.png")
     for name, (x0, y0, x1, y1, largest) in SNAKE.items():
-        part = trim(keep_largest(cut_white(src[y0:y1, x0:x1], hole_min=9000)) if largest else cut_white(src[y0:y1, x0:x1], hole_min=9000))
-        if name == "snake_rattle":
-            # keep just the rattle bulb: the drawing continues into a bit of
-            # tail below it, which would double up with the snake's own tail
-            part[RATTLE_CUT:, :, 3] = 0
-            part = trim(part, pad=1)
-            solid = part[..., 3] > 128
-            ys, xs = np.where(solid)
-            bottom = ys.max()
-            base_x = xs[ys >= bottom - 6].mean()
-            top_x = xs[ys <= ys.min() + 6].mean()
-            print(f"snake_rattle: base at ({base_x / part.shape[1]:.3f}, 1.0), leans {np.degrees(np.arctan2(base_x - top_x, bottom - ys.min())):.1f} deg")
+        part = cut_white(src[y0:y1, x0:x1], hole_min=9000)
+        part = trim(keep_largest(part) if largest else part)
         save(part, f"{name}.png")
+
+    # the rattle: its own upright drawing. Keep just the rattle (the drawn
+    # motion lines are separate bits and get dropped - the game shakes it).
+    save(trim(keep_largest(cut_white(load("snake_rattle.png"), hole_min=9000)), pad=1), "snake_rattle.png")
 
     # spider enemy parts (spooky levels)
     src = load("spider.png")

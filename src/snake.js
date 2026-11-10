@@ -9,6 +9,7 @@ const S = 0.32; // art scale (snake_body.png is 459x407)
 const BODY_W = 459;
 const BODY_H = 407;
 const TAIL_TIP = { x: 443, y: 199 }; // where the rattle goes, on snake_body.png (just inside the tail's end)
+const RATTLE_H = 56; // how tall the rattle is on screen
 const SPEED = 60; // px per second
 const DIZZY_S = 0.32;
 const HEIGHT = BODY_H * S;
@@ -28,10 +29,11 @@ export class Snake {
     // the rattle bulb sits on the tip of the tail, pivoting at its base
     const tx = (TAIL_TIP.x - BODY_W / 2) * S;
     const ty = 4 - (BODY_H - TAIL_TIP.y) * S;
-    this.rattle = scene.add.image(tx, ty, 'snake_rattle').setOrigin(0.594, 0.96).setScale(S);
+    this.rattle = scene.add.image(tx, ty, 'snake_rattle').setOrigin(0.5, 0.97);
+    this.rattle.setScale(RATTLE_H / this.rattle.height); // the art is drawn big, upright
     this.rattleX = tx;
     this.rattleY = ty;
-    this.rattleBase = 0.3; // the art leans left ~13 deg; stand it up and follow the tail's lean
+    this.rattleBase = 0.12; // lean a little with the tail
     this.container = scene.add.container(x, 0, [this.rattle, this.body]).setDepth(22);
   }
 
