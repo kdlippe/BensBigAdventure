@@ -45,6 +45,7 @@ export class GameScene extends Phaser.Scene {
     this.levelNum = (data && data.level) || loadProgress();
     this.level = buildLevel(this.levelNum);
     this.failed = false;
+    this.lastFx = undefined; // the scene object is reused between plays
     const L = this.level.length;
     this.finished = false;
     this.starCount = 0;
@@ -399,14 +400,19 @@ export class GameScene extends Phaser.Scene {
     }
 
     // ---- ramp launch: front wheel driving over a ramp lip gives a big kick ----
-    // (the truck may already have lifted off a moment earlier as the front wheel
-    // rolls over the edge, so allow a short grace period)
-    if ((t.grounded || t.airTime < 0.6) && t.vx > 150 && t.vy > -RAMP_BOOST) {
-      const prevFx = prevX + HALF_BASE * cos;
+    // Counts whenever the truck is on the ramp or no higher than a jump above it - it may
+    // have lifted off a moment earlier at the steep top, or Ben may have pressed
+    // JUMP on the way up. Jumping as well never makes the launch weaker.
+    // Uses where the front wheel really was last frame: on the steep top the
+    // truck tips up and the wheel can swing past the lip as it levels out.
+    const prevFx = this.lastFx ?? fx;
+    this.lastFx = fx;
+    if (t.vx > 150 && t.y > groundHubY - 200) { // 200: a normal jump rises ~170
       for (const r of this.level.ramps) {
         if (prevFx < r.lipX && fx >= r.lipX) {
           t.grounded = false;
-          t.vy = -(RAMP_BOOST + Math.min(t.vx, MAX_SPEED + 150)); // nitro adds a little, not a lot
+          const launch = -(RAMP_BOOST + Math.min(t.vx, MAX_SPEED + 150)); // nitro adds a little, not a lot
+          t.vy = Math.min(t.vy, launch) - (t.vy < -200 ? 120 : 0); // already jumping: a bit extra
           t.airTime = 0.2;
           sfx.launch();
         }
