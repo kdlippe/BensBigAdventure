@@ -57,6 +57,9 @@ Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on
   high); drive into one and it pinches you back (and ends a nitro boost).
 - **Spiders** replace the crabs on the spooky levels (3–4): they dangle on a thread, dropping down and
   climbing back up. Drive under one while it's high, jump over it when it's low, or land on it to squish it.
+- **Rattlesnakes** replace the crabs on the desert level (5): they slither back and forth, rattling.
+- Any enemy you touch while in the air and above its middle gets squished, so a jump in time always
+  works; driving into one on the ground bumps you back.
 - **Stars, canisters and crabs** are in new places every time you start, so each run is a little different.
 - **Timer** starts when you first drive and stops at the finish. Every star you miss adds 5 seconds
   to your total time (`MISSED_STAR_PENALTY` in `src/scenes/GameScene.js`). Each level's best time is remembered in that
@@ -79,12 +82,13 @@ src/flameArt.js         where the nitro flame leaves the pipe (generated from th
 src/truck.js            the truck drawing (body, wheels, struts)
 src/crab.js             the crab enemy: walking animation and squish
 src/spider.js           the spider enemy (spooky levels): dangles on a thread, squish
+src/snake.js            the rattlesnake enemy (desert level): slithers and rattles, squish
 src/sound.js            sound effects, generated in code (no audio files)
 assets/sprites/         the truck parts as transparent PNGs
 assets/env/             ground, ramp, scenery and backdrop art
 art/source/             the original art the game files were cut from
 tools/slice_sprites.py  cuts the truck parts out of the truck art sheet
-tools/slice_env.py      cuts/cleans the ground, ramp, scenery (all themes), flame, crab, spider and button art
+tools/slice_env.py      cuts/cleans the ground, ramp, scenery (all themes), flame, crab, spider, snake and button art
 tools/serve.py          local web server with browser caching turned off
 ```
 

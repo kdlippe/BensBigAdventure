@@ -84,6 +84,10 @@ export class Crab {
     return this.container.y - CRAB_HEIGHT;
   }
 
+  get bottom() {
+    return this.container.y;
+  }
+
   // claws up and snap (after it bumps the truck)
   snap() {
     this.claws.forEach((c) =>

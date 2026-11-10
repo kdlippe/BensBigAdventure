@@ -73,6 +73,10 @@ SPIDER = {  # in spider.png: (x0, y0, x1, y1, keep only the biggest piece?)
     "spider_thread": (446, 58, 532, 696, True),
     "spider_dizzy": (546, 120, 1010, 404, False),  # squished spider + its stars and spirals
 }
+SNAKE = {  # in snake.png: (x0, y0, x1, y1, keep only the biggest piece?)
+    "snake_body": (40, 37, 507, 452, True),  # coiled, head (with bandana) on the left
+    "snake_dizzy": (559, 120, 1005, 420, False),  # squished snake + its stars and spirals
+}
 CRAB = {  # in crab.png: (x0, y0, x1, y1, keep only the biggest piece?)
     "crab_body": (166, 96, 493, 331, True),
     "crab_claw": (29, 35, 197, 336, True),  # the raised claw
@@ -251,6 +255,17 @@ def main():
     y0, y1 = max(int(cy - r - 2), 0), int(cy + r + 3)
     x0, x1 = max(int(cx - r - 2), 0), int(cx + r + 3)
     save(b[y0:y1, x0:x1], "btn_nitro.png")
+
+    # rattlesnake enemy parts (desert level)
+    src = load("snake.png")
+    for name, (x0, y0, x1, y1, largest) in SNAKE.items():
+        part = cut_white(src[y0:y1, x0:x1], hole_min=9000)
+        part = trim(keep_largest(part) if largest else part)
+        save(part, f"{name}.png")
+
+    # the rattle: its own upright drawing. Keep just the rattle (the drawn
+    # motion lines are separate bits and get dropped - the game shakes it).
+    save(trim(keep_largest(cut_white(load("snake_rattle.png"), hole_min=9000)), pad=1), "snake_rattle.png")
 
     # spider enemy parts (spooky levels)
     src = load("spider.png")
