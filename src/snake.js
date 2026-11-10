@@ -34,7 +34,8 @@ export class Snake {
     this.rattleX = tx;
     this.rattleY = ty;
     this.rattleBase = 0.12; // lean a little with the tail
-    this.container = scene.add.container(x, 0, [this.rattle, this.body]).setDepth(22);
+    // rattle after the body, so where they overlap it sits in front of the tail
+    this.container = scene.add.container(x, 0, [this.body, this.rattle]).setDepth(22);
   }
 
   update(dt, time, groundY) {
