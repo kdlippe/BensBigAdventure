@@ -46,14 +46,16 @@ export class BootScene extends Phaser.Scene {
     const bar = this.add.rectangle(width / 2 - 200, height / 2, 0, 24, 0xffc928).setOrigin(0, 0.5);
     this.add.rectangle(width / 2, height / 2, 404, 28).setStrokeStyle(4, 0xffffff);
     this.load.on('progress', (p) => (bar.width = 400 * p));
-    for (const key of SPRITES) this.load.image(key, `assets/sprites/${key}.png`);
-    for (const key of ENV_PNG) this.load.image(key, `assets/env/${key}.png`);
-    this.load.image('dirt', 'assets/env/dirt.jpg');
-    this.load.image('background', 'assets/env/background.jpg');
-    this.load.image('dirt_spooky', 'assets/env/dirt_spooky.jpg');
-    this.load.image('background_spooky', 'assets/env/background_spooky.jpg');
-    this.load.image('dirt_desert', 'assets/env/dirt_desert.jpg');
-    this.load.image('background_desert', 'assets/env/background_desert.jpg');
+    // on the published site, stamp art with the game's version so an update
+    // never shows old pictures with new code (see tools/build_site.py)
+    const v = window.GAME_VERSION;
+    const url = (path) => (v ? `${path}?v=${v}` : path);
+    for (const key of SPRITES) this.load.image(key, url(`assets/sprites/${key}.png`));
+    for (const key of ENV_PNG) this.load.image(key, url(`assets/env/${key}.png`));
+    for (const theme of ['', '_spooky', '_desert']) {
+      this.load.image(`dirt${theme}`, url(`assets/env/dirt${theme}.jpg`));
+      this.load.image(`background${theme}`, url(`assets/env/background${theme}.jpg`));
+    }
   }
 
   create() {

@@ -69,6 +69,20 @@
     <div>Turn me sideways!</div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
-  <script type="module" src="src/main.js"></script>
+  <!-- Load the game. On the published site every update has a version
+       (version.txt, written by tools/build_site.py); asking for it fresh and
+       loading the game with it means a browser never mixes old and new files.
+       Locally there's no version.txt, so it just loads src/main.js. -->
+  <script type="module">
+    let v = '';
+    try {
+      const res = await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' });
+      if (res.ok) v = (await res.text()).trim();
+    } catch (e) {
+      /* offline or local: no version */
+    }
+    window.GAME_VERSION = v;
+    await import(v ? './src/main.js?v=' + v : './src/main.js');
+  </script>
 </body>
 </html>
