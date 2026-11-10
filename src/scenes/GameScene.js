@@ -4,7 +4,7 @@ import { Truck, WHEEL_R, HALF_BASE } from '../truck.js';
 import { sfx } from '../sound.js';
 import { requestLandscape } from '../device.js';
 import { textStyle, pillButton } from '../style.js';
-import { addBackdrop, addGround, addPit, SKY } from '../scenery.js';
+import { addBackdrop, addGround, addPit, skyFor, SPOOKY_SCENERY } from '../scenery.js';
 import { FLAME_ART } from '../flameArt.js';
 import { Crab, CRAB_HALF_WIDTH } from '../crab.js';
 
@@ -59,7 +59,7 @@ export class GameScene extends Phaser.Scene {
     this.elapsed = 0; // race time in seconds
     this.timerOn = false; // starts when Ben first drives
 
-    this.cameras.main.setBackgroundColor(SKY);
+    this.cameras.main.setBackgroundColor(skyFor(this.level.theme));
     this.cameras.main.setBounds(0, -700, L, 1420);
 
     this.drawWorld();
@@ -132,26 +132,38 @@ export class GameScene extends Phaser.Scene {
 
   drawWorld() {
     const lv = this.level;
-    this.scrollBackdrop = addBackdrop(this);
+    const theme = lv.theme;
+    this.scrollBackdrop = addBackdrop(this, theme);
     let from = 0;
     for (const p of lv.pits) {
-      addGround(this, lv.terrainY, from, p.x0);
+      addGround(this, lv.terrainY, from, p.x0, theme);
       addPit(this, p.x0, p.x1, lv.terrainY(p.x0));
       from = p.x1;
     }
-    addGround(this, lv.terrainY, from, lv.length + 400);
+    addGround(this, lv.terrainY, from, lv.length + 400, theme);
 
+    // scenery: on spooky levels each piece is swapped for its spooky stand-in,
+    // scaled to the same height on screen as the meadow piece would be
+    const height = (key) => this.textures.get(key).getSourceImage().height;
+    const look = (key, scale) => {
+      if (theme !== 'spooky' || !SPOOKY_SCENERY[key]) return [key, scale];
+      const k = SPOOKY_SCENERY[key];
+      return [k, (scale * height(key)) / height(k)];
+    };
     for (const d of lv.decor) {
-      this.add.image(d.x, d.y, d.key).setOrigin(0.5, 1).setScale(d.scale).setFlipX(d.flip).setDepth(d.depth);
+      const [key, scale] = look(d.key, d.scale);
+      this.add.image(d.x, d.y, key).setOrigin(0.5, 1).setScale(scale).setFlipX(d.flip).setDepth(d.depth);
     }
 
     for (const r of lv.ramps) {
       this.add.image(r.x, lv.terrainY(r.x) + 4, 'ramp').setOrigin(0, 1).setScale(r.scale).setDepth(14);
     }
 
-    this.add.image(lv.finishX, lv.terrainY(lv.finishX) + 14, 'finish_gate')
+    // finish gate: the spooky arch is wide, so it's sized a bit lower than the flag gate
+    const [gateKey, gateScale] = look('finish_gate', theme === 'spooky' ? 0.8 : 0.95);
+    this.add.image(lv.finishX, lv.terrainY(lv.finishX) + 14, gateKey)
       .setOrigin(0.5, 1)
-      .setScale(0.95)
+      .setScale(gateScale)
       .setDepth(15);
   }
 
