@@ -6,6 +6,9 @@ const ENV_PNG = [
   'grass_strip', 'ramp', 'tuft', 'mushroom', 'rocks', 'flower', 'bush', 'flame_jet',
   'crab_body', 'crab_claw', 'crab_leg', 'crab_dizzy',
   'btn_nitro', // turbo button art
+  // spooky levels
+  'grass_strip_spooky', 'thorns', 'pumpkin', 'spooky_mushrooms', 'tombstone', 'bones',
+  'spooky_tree', 'iron_fence', 'slime_tires', 'spooky_gate',
   'fence', 'tree', 'tires', 'finish_gate',
 ];
 const OUTLINE = 0x16161a;
@@ -42,6 +45,8 @@ export class BootScene extends Phaser.Scene {
     for (const key of ENV_PNG) this.load.image(key, `assets/env/${key}.png`);
     this.load.image('dirt', 'assets/env/dirt.jpg');
     this.load.image('background', 'assets/env/background.jpg');
+    this.load.image('dirt_spooky', 'assets/env/dirt_spooky.jpg');
+    this.load.image('background_spooky', 'assets/env/background_spooky.jpg');
   }
 
   create() {
