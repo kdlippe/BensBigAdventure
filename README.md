@@ -42,8 +42,9 @@ Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on
 - **5 levels**, each longer than the last, with 20, 30, 40, 50 and 60 stars. The level you're on shows
   under the progress bar. Finishing a level unlocks the next (**NEXT LEVEL**); the title screen offers
   **NEW GAME** or carries on from the level you reached, and the 🏠 button goes back to the title.
-- **Two looks**: levels 1–2 are a sunny meadow; levels 3–5 are a spooky graveyard at night (moon,
-  tombstones, pumpkins, bones, a pumpkin arch at the finish). Set per level with `theme` in `src/level.js`.
+- **Three looks**: levels 1–2 are a sunny meadow; levels 3–4 are a spooky graveyard at night (moon,
+  tombstones, pumpkins, a pumpkin arch at the finish); level 5 is a desert canyon at sunset (cactuses,
+  a T-rex skull, fossils in the dirt, a canyon arch at the finish). Set per level with `theme` in `src/level.js`.
 - **Pits** (as wide as the truck): level 3 has 1 and level 4 has 2, each with a ramp right before it to
   fly over; level 5 has 3 with no ramps, so you jump yourself (a little arc of stars shows where).
   Fall in and you start the level again.
@@ -69,7 +70,7 @@ src/scenes/TitleScene.js title screen: GO! / NEW GAME / keep going
 src/scenes/GameScene.js the level: driving, jumping, boxes, stars, finish
 src/level.js            the 5 levels: ramps, box stacks, pits, stars, canisters, crabs, scenery
 src/progress.js         level reached and best time per level (saved in the browser)
-src/scenery.js          backdrop, tiled dirt and the bendy grass strip, per theme (meadow / spooky)
+src/scenery.js          backdrop, tiled dirt and the bendy grass strip, per theme (meadow / spooky / desert)
 src/groundArt.js        grass strip sizes per theme (generated from the art)
 src/rampProfile.js      the wooden ramp's curve (generated from the art)
 src/flameArt.js         where the nitro flame leaves the pipe (generated from the art)
@@ -80,7 +81,7 @@ assets/sprites/         the truck parts as transparent PNGs
 assets/env/             ground, ramp, scenery and backdrop art
 art/source/             the original art the game files were cut from
 tools/slice_sprites.py  cuts the truck parts out of the truck art sheet
-tools/slice_env.py      cuts/cleans the ground, ramp, scenery (both themes), flame, crab and button art
+tools/slice_env.py      cuts/cleans the ground, ramp, scenery (all themes), flame, crab and button art
 tools/serve.py          local web server with browser caching turned off
 ```
 

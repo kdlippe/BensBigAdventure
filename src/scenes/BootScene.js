@@ -9,6 +9,9 @@ const ENV_PNG = [
   // spooky levels
   'grass_strip_spooky', 'thorns', 'pumpkin', 'spooky_mushrooms', 'tombstone', 'bones',
   'spooky_tree', 'iron_fence', 'slime_tires', 'spooky_gate',
+  // desert level
+  'grass_strip_desert', 'cactus', 'desert_rocks', 'tumbleweed', 'prickly_pear', 'cow_skull',
+  'trex_skull', 'ranch_fence', 'dusty_tires', 'desert_gate',
   'fence', 'tree', 'tires', 'finish_gate',
 ];
 const OUTLINE = 0x16161a;
@@ -47,6 +50,8 @@ export class BootScene extends Phaser.Scene {
     this.load.image('background', 'assets/env/background.jpg');
     this.load.image('dirt_spooky', 'assets/env/dirt_spooky.jpg');
     this.load.image('background_spooky', 'assets/env/background_spooky.jpg');
+    this.load.image('dirt_desert', 'assets/env/dirt_desert.jpg');
+    this.load.image('background_desert', 'assets/env/background_desert.jpg');
   }
 
   create() {

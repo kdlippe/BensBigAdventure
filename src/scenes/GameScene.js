@@ -4,7 +4,7 @@ import { Truck, WHEEL_R, HALF_BASE } from '../truck.js';
 import { sfx } from '../sound.js';
 import { requestLandscape } from '../device.js';
 import { textStyle, pillButton } from '../style.js';
-import { addBackdrop, addGround, addPit, skyFor, SPOOKY_SCENERY } from '../scenery.js';
+import { addBackdrop, addGround, addPit, skyFor, THEME_SCENERY } from '../scenery.js';
 import { FLAME_ART } from '../flameArt.js';
 import { Crab, CRAB_HALF_WIDTH } from '../crab.js';
 
@@ -142,12 +142,13 @@ export class GameScene extends Phaser.Scene {
     }
     addGround(this, lv.terrainY, from, lv.length + 400, theme);
 
-    // scenery: on spooky levels each piece is swapped for its spooky stand-in,
+    // scenery: on spooky / desert levels each piece is swapped for its stand-in,
     // scaled to the same height on screen as the meadow piece would be
     const height = (key) => this.textures.get(key).getSourceImage().height;
     const look = (key, scale) => {
-      if (theme !== 'spooky' || !SPOOKY_SCENERY[key]) return [key, scale];
-      const k = SPOOKY_SCENERY[key];
+      const swap = THEME_SCENERY[theme] && THEME_SCENERY[theme][key];
+      if (!swap) return [key, scale];
+      const k = swap;
       return [k, (scale * height(key)) / height(k)];
     };
     for (const d of lv.decor) {
@@ -159,8 +160,8 @@ export class GameScene extends Phaser.Scene {
       this.add.image(r.x, lv.terrainY(r.x) + 4, 'ramp').setOrigin(0, 1).setScale(r.scale).setDepth(14);
     }
 
-    // finish gate: the spooky arch is wide, so it's sized a bit lower than the flag gate
-    const [gateKey, gateScale] = look('finish_gate', theme === 'spooky' ? 0.8 : 0.95);
+    // finish gate: the spooky and desert arches are wide, so they're a bit lower than the flag gate
+    const [gateKey, gateScale] = look('finish_gate', theme === 'meadow' ? 0.95 : 0.8);
     this.add.image(lv.finishX, lv.terrainY(lv.finishX) + 14, gateKey)
       .setOrigin(0.5, 1)
       .setScale(gateScale)
