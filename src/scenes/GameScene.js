@@ -2,6 +2,7 @@ import { buildLevel, BOX, PIT_BOTTOM } from '../level.js';
 import { loadProgress, saveProgress, loadBest, saveBest } from '../progress.js';
 import { Truck, WHEEL_R, HALF_BASE } from '../truck.js';
 import { sfx } from '../sound.js';
+import { music } from '../music.js';
 import { requestLandscape } from '../device.js';
 import { textStyle, pillButton } from '../style.js';
 import { addBackdrop, addGround, addPit, skyFor, THEME_SCENERY } from '../scenery.js';
@@ -131,6 +132,9 @@ export class GameScene extends Phaser.Scene {
     this.drawHud();
 
     this.events.once('shutdown', () => sfx.engineStop());
+
+    // each look has its own tune (keeps playing if it's already on)
+    music.play(this.level.theme);
   }
 
   // ------------------------------------------------------------------ drawing
@@ -693,6 +697,7 @@ export class GameScene extends Phaser.Scene {
     this.controls.forEach((c) => c.disableInteractive().setAlpha(0.4));
     this.homeBtn.disableInteractive();
     sfx.fanfare();
+    music.duck(3.5);
 
     const { width } = this.scale;
     for (let i = 0; i < 140; i++) {
@@ -783,6 +788,7 @@ export class GameScene extends Phaser.Scene {
     this.touch.drive = this.touch.back = false;
     this.controls.forEach((c) => c.disableInteractive().setAlpha(0.4));
     sfx.fall();
+    music.duck(2);
     this.time.delayedCall(500, () => {
       const { width } = this.scale;
       const g = this.add.graphics().setScrollFactor(0).setDepth(160);
