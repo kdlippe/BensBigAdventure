@@ -4,35 +4,26 @@
 Drive over bumpy hills, launch off ramps, smash cardboard boxes, grab nitro canisters for speed boosts, and collect gold
 stars on the way to the finish gate. No game over: you can't fail, only have fun. A timer lets you chase your best time.
 
-**Play it online: https://kdlippe.github.io/BensBigAdventure/**
-
-| Level 1: the meadow | Level 3: the spooky graveyard |
-|---|---|
-| ![Level 1: the monster truck parked on the grass in the sunny meadow, with a tire stack and a wooden ramp ahead](docs/screenshots/level1.jpg) | ![Level 3: the truck parked in the graveyard at night, with a spider dangling ahead among the stars](docs/screenshots/level3.jpg) |
-
 ## Play it
 
-The game needs to be served over http (browsers block loading the images from a plain file).
-From this folder run:
+**https://kdlippe.github.io/BensBigAdventure/**
 
-```bash
-python tools/serve.py
-```
+Open that link in any browser: laptop, tablet or phone, from anywhere. There's nothing to install, and
+it's always the latest version.
 
-This is a tiny web server that tells browsers to always check for updated game files. (Plain
-`python -m http.server` lets browsers keep old copies of some files, which can mix old and new code
-after an update and freeze the game.)
-
-Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on the same Wi-Fi via your computer's IP address).
+| Level 1: the meadow | Level 3: the spooky graveyard | Level 5: the desert canyon |
+|---|---|---|
+| ![Level 1: the monster truck parked on the grass in the sunny meadow, with a tire stack and a wooden ramp ahead](docs/screenshots/level1.jpg) | ![Level 3: the truck parked in the graveyard at night, with a spider dangling ahead among the stars](docs/screenshots/level3.jpg) | ![Level 5: the truck parked in the desert canyon at sunset, with a rattlesnake rearing up ahead beyond a row of stars](docs/screenshots/level5.jpg) |
 
 ## Playing on a tablet
 
-- Open `http://<your-PC's-IP>:8080` in the tablet's browser (both on the same Wi-Fi, and the PC's network set to
-  Private so Windows Firewall lets it through).
+- Open the link above in the tablet's browser.
 - On Android / Amazon Fire tablets, tapping **GO!** switches to full screen and locks the screen sideways.
   Use the browser menu's "Add to Home screen" to get an app icon that opens straight into the game.
-- iPad Safari can't lock the screen: use the rotation lock in Control Center. If the tablet is held upright,
-  the game shows a "Turn me sideways!" screen.
+- On an iPad, use Safari's Share button → "Add to Home Screen" for an app icon. Safari can't lock the
+  screen sideways, so use the rotation lock in Control Center. If the tablet is held upright, the game
+  shows a "Turn me sideways!" screen.
+- Progress (the level reached and best times) is saved in that browser, so each tablet or laptop keeps its own.
 
 ## Controls
 
@@ -48,9 +39,9 @@ Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on
 - **5 levels**, each longer than the last, with 20, 30, 40, 50 and 60 stars. The level you're on shows
   under the progress bar. Finishing a level unlocks the next (**NEXT LEVEL**); the title screen offers
   **NEW GAME** or carries on from the level you reached, and the 🏠 button goes back to the title.
-- **Music**: an original 16-bit (SNES-style) tune for each look - bouncy for the meadow (and the title
-  screen), music-box spooky for the graveyard, a cowboy trot for the desert - made in code
-  (`src/music.js`). It always plays.
+- **Music**: an original 16-bit (SNES-style) tune for each look - bouncy for the meadow, music-box
+  spooky for the graveyard, a cowboy trot for the desert - made in code (`src/music.js`). It always
+  plays during a level; the title screen is quiet, and the music starts again with the next level.
 - **Three looks**: levels 1–2 are a sunny meadow; levels 3–4 are a spooky graveyard at night (moon,
   tombstones, pumpkins, a pumpkin arch at the finish); level 5 is a desert canyon at sunset (cactuses,
   a T-rex skull, fossils in the dirt, a canyon arch at the finish). Set per level with `theme` in `src/level.js`.
@@ -76,11 +67,23 @@ Then open <http://localhost:8080> in a browser (works on a laptop or a tablet on
 
 ## Publishing
 
-Every push to `main` publishes the game to GitHub Pages
+Every push to `main` publishes the game to GitHub Pages at the link above, within a couple of minutes
 (`.github/workflows/pages.yml`). The workflow runs `tools/build_site.py`, which copies the game
 into `_site/` and stamps every code file and picture with the commit's version; `index.html`
 reads `version.txt` fresh on each visit and loads that version, so after an update browsers
 never mix old and new files (which can freeze the game).
+
+## Trying changes before publishing
+
+To test a change on your own computer before pushing it, run this from the repo folder:
+
+```bash
+python tools/serve.py
+```
+
+Then open <http://localhost:8080>. (The game has to come from a web server; browsers won't load its
+pictures from a plain file. This little server also tells browsers to always fetch fresh files, so
+you never see a mix of old and new code.)
 
 ## Project layout
 
