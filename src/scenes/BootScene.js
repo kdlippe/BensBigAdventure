@@ -5,6 +5,7 @@ const SPRITES = ['truck_body', 'wheel', 'strut', 'puff', 'puff2', 'pebble', 'dus
 const ENV_PNG = [
   'grass_strip', 'ramp', 'tuft', 'mushroom', 'rocks', 'flower', 'bush', 'flame_jet',
   'crab_body', 'crab_claw', 'crab_leg', 'crab_dizzy',
+  'spider_body', 'spider_legs_left', 'spider_legs_right', 'spider_thread', 'spider_dizzy',
   'btn_nitro', // turbo button art
   // spooky levels
   'grass_strip_spooky', 'thorns', 'pumpkin', 'spooky_mushrooms', 'tombstone', 'bones',
