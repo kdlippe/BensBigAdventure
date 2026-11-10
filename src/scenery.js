@@ -1,6 +1,7 @@
 // Drawing the world: the painted backdrop, the dirt and the bendy grass strip.
-// Shared by the title screen and the levels. There are two looks ("themes"):
-// the sunny meadow (levels 1-2, title screen) and the spooky night (levels 3-5).
+// Shared by the title screen and the levels. Each level has a look ("theme"):
+// the sunny meadow (levels 1-2, title screen), the spooky night (levels 3-4)
+// and the desert canyon (level 5).
 
 import { GROUND_ART } from './groundArt.js';
 
@@ -11,19 +12,34 @@ const BOTTOM = 1400; // how far down the dirt goes
 const THEME_ART = {
   meadow: { background: 'background', dirt: 'dirt', grass: 'grass_strip', sky: '#c3e9f1' },
   spooky: { background: 'background_spooky', dirt: 'dirt_spooky', grass: 'grass_strip_spooky', sky: '#1d2140' },
+  desert: { background: 'background_desert', dirt: 'dirt_desert', grass: 'grass_strip_desert', sky: '#f3c27e' },
 };
 
-// Spooky stand-ins for the meadow scenery (same height on screen as the original).
-export const SPOOKY_SCENERY = {
-  tree: 'spooky_tree',
-  bush: 'tombstone',
-  fence: 'iron_fence',
-  tires: 'slime_tires',
-  tuft: 'thorns',
-  flower: 'pumpkin',
-  mushroom: 'spooky_mushrooms',
-  rocks: 'bones',
-  finish_gate: 'spooky_gate',
+// Stand-ins for the meadow scenery on the other themes (drawn at the same
+// height on screen as the meadow piece they replace).
+export const THEME_SCENERY = {
+  spooky: {
+    tree: 'spooky_tree',
+    bush: 'tombstone',
+    fence: 'iron_fence',
+    tires: 'slime_tires',
+    tuft: 'thorns',
+    flower: 'pumpkin',
+    mushroom: 'spooky_mushrooms',
+    rocks: 'bones',
+    finish_gate: 'spooky_gate',
+  },
+  desert: {
+    tree: 'cactus',
+    bush: 'trex_skull',
+    fence: 'ranch_fence',
+    tires: 'dusty_tires',
+    tuft: 'tumbleweed',
+    flower: 'prickly_pear',
+    mushroom: 'cow_skull',
+    rocks: 'desert_rocks',
+    finish_gate: 'desert_gate',
+  },
 };
 
 export const SKY = THEME_ART.meadow.sky;
