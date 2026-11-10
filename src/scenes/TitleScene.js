@@ -1,5 +1,6 @@
 import { Truck, WHEEL_R } from '../truck.js';
 import { sfx } from '../sound.js';
+import { music, musicButton } from '../music.js';
 import { requestLandscape } from '../device.js';
 import { textStyle, pillButton } from '../style.js';
 import { loadProgress, saveProgress } from '../progress.js';
@@ -37,6 +38,10 @@ export class TitleScene extends Phaser.Scene {
 
     const title = this.add.text(width / 2, 90, "Ben's Monster Truck Rally", textStyle(76, '#ffc928')).setOrigin(0.5);
     this.tweens.add({ targets: title, scale: 1.04, yoyo: true, repeat: -1, duration: 700, ease: 'Sine.inOut' });
+
+    // the meadow tune (only once sound is allowed, i.e. after the first tap)
+    if (sfx.ctx) music.play('meadow');
+    musicButton(this, width - 50, 48);
 
     let started = false;
     const start = (level) => {
