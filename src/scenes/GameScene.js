@@ -8,6 +8,7 @@ import { addBackdrop, addGround, addPit, skyFor, THEME_SCENERY } from '../scener
 import { FLAME_ART } from '../flameArt.js';
 import { Crab, CRAB_HALF_WIDTH } from '../crab.js';
 import { Spider } from '../spider.js';
+import { Snake } from '../snake.js';
 
 // ---- feel knobs (tweak these to make the truck faster, floatier, bouncier) ----
 const GRAVITY = 1500;
@@ -85,8 +86,9 @@ export class GameScene extends Phaser.Scene {
       return { ...s, got: false, img };
     });
 
-    // the level's enemies: dangling spiders on spooky levels, crabs elsewhere
-    const Enemy = this.level.theme === 'spooky' ? Spider : Crab;
+    // the level's enemies: dangling spiders on spooky levels, rattlesnakes in
+    // the desert, crabs in the meadow
+    const Enemy = { spooky: Spider, desert: Snake }[this.level.theme] || Crab;
     this.crabs = this.level.crabs.map((c) => new Enemy(this, c));
     this.bumpCooldown = 0;
 
@@ -603,7 +605,10 @@ export class GameScene extends Phaser.Scene {
       const truckTop = t.y - 190;
       // no touch if the truck is below it (a spider up high) or above it
       if (!overlapX || bottom < c.top || (c.bottom !== undefined && truckTop > c.bottom)) continue;
-      if (t.vy > 0 && prevBottom <= c.top + 30) this.squishCrab(c);
+      // In the air and above its middle: a stomp (squish). Driving into it on
+      // the ground (or hitting it from below) bumps you back.
+      const middle = (c.top + (c.bottom ?? c.top + 100)) / 2;
+      if (!t.grounded && prevBottom <= middle) this.squishCrab(c);
       else if (this.bumpCooldown <= 0) this.bumpCrab(c);
     }
   }
