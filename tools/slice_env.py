@@ -66,6 +66,13 @@ DESERT_PROPS = {  # in desert_props.webp
     "desert_gate": (464, 340, 1000, 745),
     "dusty_tires": (62, 399, 445, 729),
 }
+SPIDER = {  # in spider.png: (x0, y0, x1, y1, keep only the biggest piece?)
+    "spider_body": (60, 40, 436, 302, True),
+    "spider_legs_left": (35, 324, 261, 614, True),  # hip ball on the right
+    "spider_legs_right": (243, 449, 462, 721, True),  # hip ball on the left
+    "spider_thread": (446, 58, 532, 696, True),
+    "spider_dizzy": (546, 120, 1010, 404, False),  # squished spider + its stars and spirals
+}
 CRAB = {  # in crab.png: (x0, y0, x1, y1, keep only the biggest piece?)
     "crab_body": (166, 96, 493, 331, True),
     "crab_claw": (29, 35, 197, 336, True),  # the raised claw
@@ -244,6 +251,13 @@ def main():
     y0, y1 = max(int(cy - r - 2), 0), int(cy + r + 3)
     x0, x1 = max(int(cx - r - 2), 0), int(cx + r + 3)
     save(b[y0:y1, x0:x1], "btn_nitro.png")
+
+    # spider enemy parts (spooky levels)
+    src = load("spider.png")
+    for name, (x0, y0, x1, y1, largest) in SPIDER.items():
+        # the legs have no white in them, so even tiny white gaps between them go
+        part = cut_white(src[y0:y1, x0:x1], hole_min=20 if "legs" in name else 9000)
+        save(trim(keep_largest(part) if largest else part), f"{name}.png")
 
     # nitro flame: points left, round base on the right. Its white-hot core is
     # an enclosed near-white area, so don't treat enclosed white as background.

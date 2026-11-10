@@ -7,6 +7,7 @@ import { textStyle, pillButton } from '../style.js';
 import { addBackdrop, addGround, addPit, skyFor, THEME_SCENERY } from '../scenery.js';
 import { FLAME_ART } from '../flameArt.js';
 import { Crab, CRAB_HALF_WIDTH } from '../crab.js';
+import { Spider } from '../spider.js';
 
 // ---- feel knobs (tweak these to make the truck faster, floatier, bouncier) ----
 const GRAVITY = 1500;
@@ -84,7 +85,9 @@ export class GameScene extends Phaser.Scene {
       return { ...s, got: false, img };
     });
 
-    this.crabs = this.level.crabs.map((c) => new Crab(this, c));
+    // the level's enemies: dangling spiders on spooky levels, crabs elsewhere
+    const Enemy = this.level.theme === 'spooky' ? Spider : Crab;
+    this.crabs = this.level.crabs.map((c) => new Enemy(this, c));
     this.bumpCooldown = 0;
 
     this.cans = this.level.nitro.map((n, i) => {
@@ -594,9 +597,12 @@ export class GameScene extends Phaser.Scene {
     for (const c of this.crabs) {
       c.update(dt, time, this.level.groundY);
       if (c.squished || this.finished) continue;
-      const overlapX = c.x + CRAB_HALF_WIDTH > t.x - 150 && c.x - CRAB_HALF_WIDTH < t.x + 150;
+      const half = c.halfWidth ?? CRAB_HALF_WIDTH;
+      const overlapX = c.x + half > t.x - 150 && c.x - half < t.x + 150;
       const bottom = t.y + WHEEL_R;
-      if (!overlapX || bottom < c.top) continue;
+      const truckTop = t.y - 190;
+      // no touch if the truck is below it (a spider up high) or above it
+      if (!overlapX || bottom < c.top || (c.bottom !== undefined && truckTop > c.bottom)) continue;
       if (t.vy > 0 && prevBottom <= c.top + 30) this.squishCrab(c);
       else if (this.bumpCooldown <= 0) this.bumpCrab(c);
     }
