@@ -171,6 +171,21 @@ def main():
         part = cut_white(src[y0:y1, x0:x1], hole_min=9000)
         save(trim(keep_largest(part) if largest else part), f"{name}.png")
 
+    # turbo (nitro) button: keep just the round button. The art has a "1"
+    # badge painted on its top-right; outside the circle it's cut away, inside
+    # it the game's own live count badge sits on top of it.
+    b = cut_white(load("btn_nitro.png"), hole_min=10**9)
+    solid = b[..., 3] > 128
+    dist = ndimage.distance_transform_edt(solid)
+    cy, cx = np.unravel_index(int(np.argmax(dist)), dist.shape)
+    r = float(dist.max()) + 1.5
+    yy, xx = np.mgrid[: b.shape[0], : b.shape[1]]
+    d = np.hypot(yy - cy, xx - cx)
+    b[..., 3] = (b[..., 3] * np.clip(r + 0.5 - d, 0, 1)).astype(np.uint8)
+    y0, y1 = max(int(cy - r - 2), 0), int(cy + r + 3)
+    x0, x1 = max(int(cx - r - 2), 0), int(cx + r + 3)
+    save(b[y0:y1, x0:x1], "btn_nitro.png")
+
     # nitro flame: points left, round base on the right. Its white-hot core is
     # an enclosed near-white area, so don't treat enclosed white as background.
     f = trim(cut_white(load("flame.png"), hole_min=10**9))

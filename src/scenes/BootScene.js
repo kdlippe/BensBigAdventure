@@ -5,6 +5,7 @@ const SPRITES = ['truck_body', 'wheel', 'strut', 'puff', 'puff2', 'pebble', 'dus
 const ENV_PNG = [
   'grass_strip', 'ramp', 'tuft', 'mushroom', 'rocks', 'flower', 'bush', 'flame_jet',
   'crab_body', 'crab_claw', 'crab_leg', 'crab_dizzy',
+  'btn_nitro', // turbo button art
   'fence', 'tree', 'tires', 'finish_gate',
 ];
 const OUTLINE = 0x16161a;
@@ -156,10 +157,6 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0xff7043).fillTriangle(32, 18, 19, 30, 45, 30);
       g.fillStyle(0xff7043).fillRect(22, 30, 20, 16);
       g.fillStyle(OUTLINE).fillRect(29, 37, 7, 13);
-    });
-    button('btn_nitro', 140, 0xff7043, 0xbf360c, (g, r) => {
-      g.fillStyle(OUTLINE).fillPoints(boltPoints(r - 2, r - 4, 66), true);
-      g.fillStyle(0xffe680).fillPoints(boltPoints(r - 2, r - 4, 52), true);
     });
 
     // nitro canister: red tank with a lightning bolt
