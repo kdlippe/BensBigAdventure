@@ -215,8 +215,9 @@ export class GameScene extends Phaser.Scene {
       .setDepth(101);
 
     // nitro charges: a number badge on the nitro button
-    const bx2 = this.nitroBtn.x + 52;
-    const by2 = this.nitroBtn.y - 52;
+    // same spot as the badge painted on the button art (so it covers it)
+    const bx2 = this.nitroBtn.x + 0.66 * 70;
+    const by2 = this.nitroBtn.y - 0.66 * 70;
     const badge = this.add.graphics().setScrollFactor(0).setDepth(113);
     badge.fillStyle(OUTLINE).fillCircle(bx2, by2, 26);
     badge.fillStyle(0xffffff).fillCircle(bx2, by2, 21);
@@ -288,13 +289,15 @@ export class GameScene extends Phaser.Scene {
     jump.on('pointerup', () => jump.setScale(1));
     jump.on('pointerout', () => jump.setScale(1));
     const nitro = this.add.image(290, height - 92, 'btn_nitro').setScrollFactor(0).setDepth(110);
+    nitro.setDisplaySize(140, 140); // the art is bigger; show it at button size
+    const nitroScale = nitro.scaleX;
     nitro.setInteractive({ useHandCursor: true });
     nitro.on('pointerdown', () => {
       this.nitroQueued = true;
-      nitro.setScale(0.92);
+      nitro.setScale(nitroScale * 0.92);
     });
-    nitro.on('pointerup', () => nitro.setScale(1));
-    nitro.on('pointerout', () => nitro.setScale(1));
+    nitro.on('pointerup', () => nitro.setScale(nitroScale));
+    nitro.on('pointerout', () => nitro.setScale(nitroScale));
     this.nitroBtn = nitro;
     this.controls = [drive, back, jump, nitro];
     for (const k of [this.keys.SHIFT, this.keys.N]) {
