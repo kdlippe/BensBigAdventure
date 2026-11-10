@@ -175,13 +175,15 @@ export class GameScene extends Phaser.Scene {
 
     // which level (under the progress bar) and a home button (back to the title)
     const pill = this.add.graphics().setScrollFactor(0).setDepth(100);
-    pill.fillStyle(OUTLINE).fillRoundedRect(560, 72, 170, 44, 22);
-    pill.fillStyle(0xff7043).fillRoundedRect(564, 76, 162, 36, 18);
-    this.add.text(645, 93, `LEVEL ${this.levelNum}`, textStyle(28))
+    pill.fillStyle(OUTLINE).fillRoundedRect(580, 72, 170, 44, 22);
+    pill.fillStyle(0xff7043).fillRoundedRect(584, 76, 162, 36, 18);
+    this.add.text(665, 93, `LEVEL ${this.levelNum}`, textStyle(28))
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setDepth(101);
-    const home = this.add.image(300, 53, 'btn_home').setScrollFactor(0).setDepth(110).setInteractive({ useHandCursor: true });
+    // sits just right of the star bubble (whose width depends on the font), with a gap
+    const homeX = 20 + inner + 10 + 18 + 32;
+    const home = this.add.image(homeX, 53, 'btn_home').setScrollFactor(0).setDepth(110).setInteractive({ useHandCursor: true });
     home.on('pointerdown', () => {
       sfx.button();
       this.scene.start('Title');
@@ -189,8 +191,8 @@ export class GameScene extends Phaser.Scene {
     this.homeBtn = home;
 
     // progress bar to the finish flag
-    const bx = 400;
-    const bw = 480;
+    const bx = 440;
+    const bw = 450;
     const bar = this.add.graphics().setScrollFactor(0).setDepth(100);
     bar.fillStyle(OUTLINE).fillRoundedRect(bx - 5, 33, bw + 10, 34, 17);
     bar.fillStyle(0xffffff).fillRoundedRect(bx, 38, bw, 24, 12);
