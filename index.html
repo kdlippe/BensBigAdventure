@@ -55,6 +55,26 @@
     @media (orientation: portrait) and (pointer: coarse) {
       #rotate { display: flex; }
     }
+    /* chose "play anyway" while the phone is stuck upright */
+    body.play-upright #rotate { display: none; }
+    #rotate .hint {
+      max-width: 85%;
+      font-size: 24px;
+      color: #ffffff;
+      -webkit-text-stroke: 1px #16161a;
+    }
+    #rotate .anyway {
+      display: none;
+      font: inherit;
+      font-size: 22px;
+      color: #ffffff;
+      background: #1d3b5a;
+      border: 3px solid #16161a;
+      border-radius: 999px;
+      padding: 8px 22px;
+      -webkit-text-stroke: 0;
+    }
+    #rotate.stuck .anyway { display: block; }
   </style>
 </head>
 <body>
@@ -67,6 +87,8 @@
       <circle cx="60" cy="105" r="3.5" fill="#c3e9f1" />
     </svg>
     <div>Turn me sideways!</div>
+    <div class="hint">Screen won't turn? Tap here!</div>
+    <button class="anyway" type="button">Play anyway</button>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
   <!-- Load the game. On the published site every update has a version
