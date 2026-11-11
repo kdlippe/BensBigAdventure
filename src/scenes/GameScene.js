@@ -10,7 +10,7 @@ import { FLAME_ART } from '../flameArt.js';
 import { Crab, CRAB_HALF_WIDTH } from '../crab.js';
 import { Spider } from '../spider.js';
 import { Snake } from '../snake.js';
-import { SnowSpider } from '../snowspider.js';
+import { Snowman } from '../snowman.js';
 
 // ---- feel knobs (tweak these to make the truck faster, floatier, bouncier) ----
 const GRAVITY = 1500;
@@ -62,7 +62,7 @@ export class GameScene extends Phaser.Scene {
     this.crashed = false;
     this.wreck = null;
     this.wreckBits = [];
-    this.snowballs = []; // thrown by snow spiders (snow level)
+    this.snowballs = []; // thrown by snowmen (snow level)
     this.nitro = { charges: NITRO_START, time: 0 };
     this.lineTimer = 0;
     this.elapsed = 0; // race time in seconds
@@ -95,7 +95,7 @@ export class GameScene extends Phaser.Scene {
 
     // the level's enemies: dangling spiders on spooky levels, rattlesnakes in
     // the desert, crabs in the meadow
-    const Enemy = { spooky: Spider, desert: Snake, snow: SnowSpider }[this.level.theme] || Crab;
+    const Enemy = { spooky: Spider, desert: Snake, snow: Snowman }[this.level.theme] || Crab;
     this.crabs = this.level.crabs.map((c) => new Enemy(this, c));
     this.bumpCooldown = 0;
 
@@ -636,7 +636,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  // a snow spider threw one
+  // a snowman threw one
   addSnowball(ball) {
     this.snowballs.push(ball);
   }
@@ -759,7 +759,7 @@ export class GameScene extends Phaser.Scene {
     // the wreck smokes
     this.smokeTimer = 0.2;
 
-    const who = { spooky: 'spider', desert: 'snake', snow: 'snow spider' }[this.level.theme] || 'crab';
+    const who = { spooky: 'spider', desert: 'snake', snow: 'snowman' }[this.level.theme] || 'crab';
     this.time.delayedCall(1600, () =>
       this.fail({ title: 'KA-BOOM!', sub: `Jump on the ${who} to squish it!`, sound: false })
     );

@@ -8,8 +8,8 @@ const ENV_PNG = [
   'spider_body', 'spider_legs_left', 'spider_legs_right', 'spider_thread', 'spider_dizzy',
   'snake_body', 'snake_rattle', 'snake_dizzy',
   'btn_nitro', // turbo button art
-  // snowballs the snow spiders throw
-  'snowball', 'snowball_trail', 'snowball_poof', 'snowball_bits', 'snow_wisp1', 'snow_wisp2', 'snow_wisp3',
+  // snowballs the snowmen throw
+  'snowball', 'snowball_poof', 'snowball_bits',
   // the truck blown up (bumping an enemy)
   'wreck_body', 'wreck_wheel1', 'wreck_wheel2', 'boom_big',
   'wreck_shock1', 'wreck_shock2', 'wreck_shock3',
@@ -23,7 +23,7 @@ const ENV_PNG = [
   // snow level
   'grass_strip_snow', 'snow_log', 'ice_crystals', 'snowballs', 'icy_bramble', 'ice_rock',
   'snow_fence', 'snow_gate', 'snow_tires', 'snow_tree',
-  'snowspider_body', 'snowspider_leg1', 'snowspider_leg2', 'snowspider_leg3', 'snowspider_leg4', 'snowspider_dizzy',
+  'snowman_body', 'snowman_arm', 'snowman_dizzy',
   'fence', 'tree', 'tires', 'finish_gate',
 ];
 const OUTLINE = 0x16161a;

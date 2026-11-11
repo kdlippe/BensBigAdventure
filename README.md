@@ -15,7 +15,7 @@ it's always the latest version.
 |---|---|
 | ![Level 1: the monster truck parked on the grass in the sunny meadow, with a crab ahead](docs/screenshots/level1.jpg) | ![Level 2: the truck parked in the graveyard under a full moon, with a spider dangling ahead](docs/screenshots/level2.jpg) |
 | **Level 3: the desert canyon** | **Level 4: the snowy mountains** |
-| ![Level 3: the truck parked in the desert canyon at sunset, among dinosaur skulls, with a rattlesnake ahead](docs/screenshots/level3.jpg) | ![Level 4: the truck parked in the snowy mountains with snow falling, a snow spider ahead, and a cabin in the distance](docs/screenshots/level4.jpg) |
+| ![Level 3: the truck parked in the desert canyon at sunset, among dinosaur skulls, with a rattlesnake ahead](docs/screenshots/level3.jpg) | ![Level 4: the truck parked in the snowy mountains with snow falling and an evil snowman ahead by a pine tree](docs/screenshots/level4.jpg) |
 
 ## Playing on a tablet
 
@@ -63,10 +63,10 @@ it's always the latest version.
 - **Spiders** replace the crabs on the spooky level (2): they dangle on a thread, dropping down and
   climbing back up. Drive under one while it's high, jump over it when it's low, or land on it to squish it.
 - **Rattlesnakes** replace the crabs on the desert level (3): they slither back and forth, rattling.
-- **Snow spiders** replace the crabs on the snow level (4): grumpy snowballs on four icy legs that
-  scuttle back and forth, and throw snowballs at the truck when it comes near. The snowballs roll
-  low along the ground with a frosty streak behind them: jump while driving at one and it rolls
-  underneath. One that hits bursts into a puff of snow and knocks the truck back (and ends a boost).
+- **Evil snowmen** replace the crabs on the snow level (4): they hop back and forth in their top
+  hats, and when the truck comes near they wind up and throw snowballs at it. The snowballs roll
+  low along the ground, kicking up a trail of snow dust that fades away: jump while driving at one
+  and it rolls underneath. One that hits bursts into a puff of snow and knocks the truck back (and ends a boost).
 - Any enemy you touch while in the air and above its middle gets squished, so a jump in time always
   works.
 - **Crashing**: touching an enemy without squishing it blows the truck up. There's a big explosion,
@@ -115,8 +115,8 @@ src/truck.js            the truck drawing (body, wheels, struts)
 src/crab.js             the crab enemy: walking animation and squish
 src/spider.js           the spider enemy (spooky levels): dangles on a thread, squish
 src/snake.js            the rattlesnake enemy (desert level): slithers and rattles, squish
-src/snowspider.js       the snow spider enemy (snow level): scuttles on icy legs, throws snowballs, squish
-src/snowball.js         a thrown snowball: rolls at the truck with a frosty trail, bursts on a hit
+src/snowman.js          the evil snowman enemy (snow level): hops, throws snowballs, squish
+src/snowball.js         a thrown snowball: rolls at the truck kicking up snow dust, bursts on a hit
 src/sound.js            sound effects, generated in code (no audio files)
 src/music.js            background music: 16-bit-style instruments, echo, and one song per look
 assets/sprites/         the truck parts as transparent PNGs
