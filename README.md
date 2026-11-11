@@ -1,7 +1,7 @@
 # BensBigAdventure
 
 **Ben's Monster Truck Rally**: a side-scrolling monster truck game for a 6-year-old, built with [Phaser 3](https://phaser.io/).
-Pick a truck (Ben's truck or the ghost truck), then drive over bumpy hills, launch off ramps, smash cardboard boxes, grab nitro canisters for speed boosts, and collect gold
+Pick a truck (Ben's truck or the ghost truck), then drive over bumpy hills, launch off ramps, smash wooden crates, grab nitro canisters for speed boosts, and collect gold
 stars on the way to the finish gate. No game over: a crash or a fall into a pit just means trying the level again. A timer lets you chase your best time.
 
 ## Play it
@@ -143,7 +143,7 @@ you never see a mix of old and new code.)
 ```
 index.html              page that loads Phaser (from a CDN) and the game
 src/main.js             game setup
-src/scenes/BootScene.js loads the truck art, draws stars/boxes/buttons and both trucks' progress-bar icons
+src/scenes/BootScene.js loads the truck art, draws stars/buttons and both trucks' progress-bar icons
 src/scenes/TitleScene.js title screen: pick a truck, GO! / NEW GAME / keep going
 src/scenes/GameScene.js the level: driving, jumping, boxes, stars, finish
 src/level.js            the 4 levels: ramps, box stacks, pits, stars, canisters, crabs, scenery

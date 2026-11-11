@@ -33,7 +33,7 @@ const ENV_PNG = [
   'king_arm_slam', 'king_slam_burst', 'king_slam_crack', 'king_slam_dust_l', 'king_slam_dust_r',
   // the second truck to pick: the ghost truck
   'truck2_body', 'truck2_wreck', 'truck2_boom', 'truck2_body_snorkel', 'truck2_wheel', 'truck2_wheel_far', 'truck2_chassis',
-  'fence', 'tree', 'tires', 'finish_gate',
+  'fence', 'tree', 'tires', 'finish_gate', 'crate',
 ];
 const OUTLINE = 0x16161a;
 
@@ -109,15 +109,6 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(OUTLINE).fillPoints(starPoints(48, 50, 46, 22), true);
       g.fillStyle(0xffc928).fillPoints(starPoints(48, 50, 38, 17), true);
       g.fillStyle(0xffe680).fillPoints(starPoints(44, 44, 18, 8), true);
-    });
-
-    // cardboard box
-    this.tex('box', 80, 80, (g) => {
-      g.fillStyle(OUTLINE).fillRoundedRect(0, 0, 80, 80, 8);
-      g.fillStyle(0xd9a15a).fillRoundedRect(5, 5, 70, 70, 5);
-      g.fillStyle(0xc4873f).fillRect(5, 52, 70, 23);
-      g.fillStyle(0xf2d38e).fillRect(33, 5, 14, 70);
-      g.lineStyle(4, 0x7a4e1b).lineBetween(7, 28, 73, 28);
     });
 
     // checkered finish flag on a pole
