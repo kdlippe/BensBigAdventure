@@ -237,7 +237,12 @@ export class KingCrab {
     if (dx > this.halfWidth + 120) return null;
     const bottom = t.y + wheelR;
     if (bottom < this.top + 4) return null;
-    if (this.state === 'sleep' && !t.grounded && prevBottom <= this.top + 40 && dx < this.halfWidth + 70) return 'bonk';
+    if (this.state === 'sleep' && !t.grounded) {
+      // landed on its shell from above...
+      if (prevBottom <= this.top + 40 && dx < this.halfWidth + 70) return 'bonk';
+      // ...or jumped a bit early and came down on its edge: still counts
+      if (t.vy > 0 && bottom <= this.top + 80) return 'bonk';
+    }
     return 'bump';
   }
 
