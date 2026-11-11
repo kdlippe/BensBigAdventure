@@ -108,6 +108,16 @@ SNOW_SPIDER = {  # in snow_spider.png: (x0, y0, x1, y1, keep only the biggest pi
     "snowspider_dizzy": (540, 120, 1018, 446, False),  # squished, with stars and spirals
 }
 
+SNOWBALL = {  # in snowball.png (what the snow spiders throw): (x0, y0, x1, y1, keep only the biggest piece?)
+    "snowball": (66, 58, 336, 322, True),  # the ball itself (its loose bits are dropped)
+    "snowball_trail": (178, 226, 954, 584, False),  # frosty streak: pointed end at the ball, swirls behind
+    "snowball_poof": (83, 563, 255, 718, True),  # burst when it hits
+    "snowball_bits": (543, 58, 802, 228, False),  # chunks flying off
+    "snow_wisp1": (334, 596, 502, 708, False),
+    "snow_wisp2": (546, 592, 744, 709, False),
+    "snow_wisp3": (780, 596, 958, 701, False),
+}
+
 WRECK = {  # in truck_wreck.png (the truck blown up): (x0, y0, x1, y1, keep only the biggest piece?)
     "wreck_body": (36, 30, 588, 385, True),  # smashed truck, no wheels
     "wreck_wheel1": (29, 369, 241, 576, True),  # tire with a bite out of it
@@ -308,6 +318,19 @@ def main():
     src = load("snow_spider.png")
     for name, (x0, y0, x1, y1, largest) in SNOW_SPIDER.items():
         part = cut_white(src[y0:y1, x0:x1], hole_min=400, snow=True)
+        save(trim(keep_largest(part) if largest else part), f"{name}.png")
+
+    # snowballs the snow spiders throw (level 4), with their trail and burst
+    src = load("snowball.png")
+    for name, (x0, y0, x1, y1, largest) in SNOWBALL.items():
+        sheet = src
+        if name == "snowball_trail":
+            # its box overlaps the ball and the puff: paint those out first
+            sheet = src.copy()
+            for other in ("snowball", "snowball_poof"):
+                ox0, oy0, ox1, oy1, _ = SNOWBALL[other]
+                sheet[oy0:oy1, ox0:ox1] = 255
+        part = cut_white(sheet[y0:y1, x0:x1], hole_min=50000, snow=True)
         save(trim(keep_largest(part) if largest else part), f"{name}.png")
 
     # crab enemy parts. The eyes are enclosed white areas, so only treat much

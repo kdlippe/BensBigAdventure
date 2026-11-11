@@ -8,6 +8,8 @@ const ENV_PNG = [
   'spider_body', 'spider_legs_left', 'spider_legs_right', 'spider_thread', 'spider_dizzy',
   'snake_body', 'snake_rattle', 'snake_dizzy',
   'btn_nitro', // turbo button art
+  // snowballs the snow spiders throw
+  'snowball', 'snowball_trail', 'snowball_poof', 'snowball_bits', 'snow_wisp1', 'snow_wisp2', 'snow_wisp3',
   // the truck blown up (bumping an enemy)
   'wreck_body', 'wreck_wheel1', 'wreck_wheel2', 'boom_big',
   'wreck_shock1', 'wreck_shock2', 'wreck_shock3',

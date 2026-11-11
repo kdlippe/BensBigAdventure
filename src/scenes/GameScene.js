@@ -62,6 +62,7 @@ export class GameScene extends Phaser.Scene {
     this.crashed = false;
     this.wreck = null;
     this.wreckBits = [];
+    this.snowballs = []; // thrown by snow spiders (snow level)
     this.nitro = { charges: NITRO_START, time: 0 };
     this.lineTimer = 0;
     this.elapsed = 0; // race time in seconds
@@ -349,6 +350,7 @@ export class GameScene extends Phaser.Scene {
     // blown up: just the flying pieces (and the enemies) move
     if (this.crashed) {
       this.updateWreck(dt);
+      this.updateSnowballs(dt, false);
       for (const c of this.crabs) if (!c.squished) c.update(dt, time, ground);
       return;
     }
@@ -511,6 +513,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.updateCrabs(dt, time, prevBottom);
+    this.updateSnowballs(dt, true);
 
     // ---- suspension & body tilt ----
     t.squashV += (-SPRING * t.squash - DAMPING * t.squashV) * dt;
@@ -631,6 +634,44 @@ export class GameScene extends Phaser.Scene {
       else this.crash(c);
       if (this.crashed) return;
     }
+  }
+
+  // a snow spider threw one
+  addSnowball(ball) {
+    this.snowballs.push(ball);
+  }
+
+  // Snowballs roll along low: jump (while driving at them) and they pass underneath. One that reaches
+  // the truck bursts and knocks it back (and ends a nitro boost).
+  updateSnowballs(dt, canHit) {
+    if (!this.snowballs.length) return;
+    const t = this.t;
+    for (const b of this.snowballs) {
+      b.update(dt, this.level.groundY);
+      if (b.dead || !canHit || this.finished) continue;
+      // only the wheels count: the truck stands high, so a low snowball fits
+      // under the body between them
+      const hits = [-HALF_BASE, HALF_BASE].some((lx) => {
+        const w = this.truck.toWorld(lx, 0);
+        return Math.hypot(w.x - b.x, w.y - b.y) < WHEEL_R + b.r - 12;
+      });
+      if (hits) this.snowballHit(b);
+    }
+    this.snowballs = this.snowballs.filter((b) => !b.dead);
+  }
+
+  snowballHit(b) {
+    const t = this.t;
+    b.burst();
+    t.vx = Math.sign(b.vx) * 280; // pushed the way the snowball was going
+    t.vy = -320;
+    t.grounded = false;
+    t.airTime = 0.2;
+    t.squashV += 120;
+    this.nitro.time = 0;
+    sfx.squish();
+    sfx.bump();
+    this.cameras.main.shake(180, 0.01);
   }
 
   squishCrab(c) {

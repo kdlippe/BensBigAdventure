@@ -2,6 +2,9 @@
 // scuttles back and forth over its patch of ground. Jump over it, or land on
 // it to squish it; drive into it and the truck blows up.
 //
+// When the truck comes near it throws snowballs that roll along the ground at
+// the truck (jump over them!).
+//
 // Same interface as the crab: update(), x, top, bottom, halfWidth, squish(), snap().
 // Coordinates inside the container: (0, 0) is the ground under its middle.
 
@@ -18,6 +21,11 @@ const LEGS = [
 ];
 const HEIGHT = 140;
 const DIZZY_S = 0.3;
+const THROW_NEAR = 300; // throws when the truck is between these distances away
+const THROW_FAR = 1150;
+const THROW_EVERY = [2.4, 3.6]; // seconds between throws (random in this range)
+
+import { Snowball } from './snowball.js';
 
 export class SnowSpider {
   constructor(scene, { x, minX, maxX }) {
@@ -30,6 +38,9 @@ export class SnowSpider {
     this.halfWidth = 62;
     this.squished = false;
     this.ground = 0;
+    this.throwTimer = 1 + Math.random(); // first throw comes a moment after the truck is in range
+    this.faceTimer = 0; // while > 0 it looks at the truck (it just threw)
+    this.faceDir = 1;
 
     // legs hang from their top end (the hip); the two far ones go behind
     this.legs = LEGS.map((l, i) => {
@@ -66,10 +77,28 @@ export class SnowSpider {
       leg.setRotation(leg.lean + swing * 0.22);
       leg.y = leg.hipY - bob;
     }
-    // the art looks to the right; face the way it's walking
-    this.body.setFlipX(this.dir < 0);
+    this.throwAtTruck(dt);
+    // the art looks to the right; face the way it's walking (or at the truck, just after a throw)
+    this.faceTimer -= dt;
+    this.body.setFlipX((this.faceTimer > 0 ? this.faceDir : this.dir) < 0);
     this.body.y = BODY_Y - bob;
     this.body.setRotation(Math.sin(this.phase) * 0.05);
+  }
+
+  throwAtTruck(dt) {
+    const scene = this.scene;
+    if (scene.finished || !scene.t || !scene.addSnowball) return;
+    const dx = scene.t.x - this.x;
+    if (Math.abs(dx) < THROW_NEAR || Math.abs(dx) > THROW_FAR) return;
+    this.throwTimer -= dt;
+    if (this.throwTimer > 0) return;
+    this.throwTimer = THROW_EVERY[0] + Math.random() * (THROW_EVERY[1] - THROW_EVERY[0]);
+    const side = Math.sign(dx);
+    this.faceDir = side;
+    this.faceTimer = 0.7;
+    // wind up (squash) and fling it
+    scene.tweens.add({ targets: this.body, scaleX: BODY_S * 1.12, scaleY: BODY_S * 0.86, yoyo: true, duration: 110 });
+    scene.addSnowball(new Snowball(scene, this.x + side * 50, this.ground + BODY_Y + 20, side));
   }
 
   get top() {
