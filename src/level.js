@@ -1,4 +1,4 @@
-// The 5 levels, one per look. Everything is measured in game pixels; the screen is 1280x720.
+// The 6 levels: one per look, then the King Crab boss. Everything is measured in game pixels; the screen is 1280x720.
 //
 // Each level's layout (where the ramps, box stacks and pits go, and the
 // scenery) is random but the same every time you play that level (seeded by
@@ -26,6 +26,11 @@ export const LEVELS = [
     // 5 creatures: they take turns, so that's 3 pufferfish and 2 octopuses
     stars: 50, length: LENGTH, ramps: 6, stacks: 7, rampPits: 1, jumpPits: 2, crabs: 5, theme: 'sea',
     physics: { gravity: 0.5, jump: 0.8, ramp: 0.75 },
+  },
+  // the finale: the King Crab boss in a flat arena - nothing but the boss (and nitro), with its own tune
+  {
+    stars: 0, length: 3000, ramps: 0, stacks: 0, rampPits: 0, jumpPits: 0, crabs: 0, theme: 'meadow',
+    boss: 'kingcrab', flat: true, music: 'boss',
   },
 ];
 
@@ -150,6 +155,7 @@ export function buildLevel(levelNum = 1, rand = Math.random) {
   };
 
   const hillHeight = (x) => {
+    if (def.flat) return 0;
     let env = smooth(500, 1100, x) * (1 - smooth(length - 1500, length - 1000, x));
     for (const r of ramps) env *= 1 - zone(x, r.x - 250, r.backX + 500);
     for (const s of stacks) env *= 1 - zone(x, s.x - 150, s.x + s.rows[0] * BOX + 150);
@@ -347,6 +353,8 @@ export function buildLevel(levelNum = 1, rand = Math.random) {
   return {
     num: levelNum,
     theme: def.theme,
+    boss: def.boss,
+    music: def.music,
     physics,
     count: LEVELS.length,
     length,

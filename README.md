@@ -16,8 +16,8 @@ it's always the latest version.
 | ![Level 1: the monster truck parked on the grass in the sunny meadow, with a crab ahead](docs/screenshots/level1.jpg) | ![Level 2: the truck parked in the graveyard under a full moon, with a spider dangling ahead](docs/screenshots/level2.jpg) |
 | **Level 3: the desert canyon** | **Level 4: the snowy mountains** |
 | ![Level 3: the truck parked in the desert canyon at sunset, among dinosaur skulls, with a rattlesnake ahead](docs/screenshots/level3.jpg) | ![Level 4: the truck parked in the snowy mountains with snow falling and an evil snowman ahead by a pine tree](docs/screenshots/level4.jpg) |
-| **Level 5: under the sea** | |
-| ![Level 5: the truck in goggles and a snorkel on the seabed, by a sunken ship, with an octopus squirting a cloud of ink at it](docs/screenshots/level5.jpg) | |
+| **Level 5: under the sea** | **Level 6: the King Crab boss** |
+| ![Level 5: the truck in goggles and a snorkel on the seabed, by a sunken ship, with an octopus squirting a cloud of ink at it](docs/screenshots/level5.jpg) | ![Level 6: the truck facing the giant King Crab, wearing a crown and fast asleep with Zzz's floating up, beside a crack it slammed into the ground](docs/screenshots/level6.jpg) |
 
 ## Playing on a tablet
 
@@ -40,12 +40,13 @@ it's always the latest version.
 
 ## How it plays
 
-- **5 levels**, one for each look, each with 50 stars and the same length. The level you're on shows
+- **6 levels**: five races, one for each look, each with 50 stars and the same length, then the
+  **King Crab** boss fight (see below). The level you're on shows
   under the progress bar. Finishing a level unlocks the next (**NEXT LEVEL**); the title screen offers
   **NEW GAME** or carries on from the level you reached, and the 🏠 button goes back to the title.
 - **Music**: an original 16-bit (SNES-style) tune for each look - bouncy for the meadow, music-box
   spooky for the graveyard, a cowboy trot for the desert, a jingly sleigh ride for the snow, a
-  dreamy wobbly drift under the sea - made in code (`src/music.js`). It always plays during a level; the title screen is quiet, and the music starts again with the next level.
+  dreamy wobbly drift under the sea, and a fast, bold boss tune for the King Crab - made in code (`src/music.js`). It always plays during a level; the title screen is quiet, and the music starts again with the next level.
 - **Five looks**: level 1 is a sunny meadow; level 2 is a spooky graveyard at night (moon,
   tombstones, pumpkins, a pumpkin arch at the finish); level 3 is a desert canyon at sunset (cactuses,
   a T-rex skull, fossils in the dirt, a canyon arch at the finish); level 4 is snowy mountains with snow
@@ -83,6 +84,14 @@ it's always the latest version.
 - **Crashing**: touching an enemy without squishing it blows the truck up. There's a big explosion,
   the smashed truck flops down smoking, the wheels, shocks and bolts fly off and bounce away, and
   then you try the level again.
+- **The King Crab** (level 6, the finale) waits in a flat arena with its own fast boss tune. Its
+  health shows at the top as a crown and three hearts. Awake it's far too tall to land on, and
+  bumping into it shoves the truck back (it never blows the truck up). It stomps about, raises a
+  claw and SLAMS it into the ground (dirt bursts, the ground cracks, dust flies); from the second
+  round it also throws a rock that rolls at the truck as it winds up - jump it. Then it's worn out
+  and falls asleep for 7 seconds - Zzz - and that's the moment to jump and land on its shell. A bonk
+  wakes it up cross and it comes back faster. Three bonks and it's beaten: it flops down dizzy and
+  Ben wins the crown. Tip: jump a little before reaching it.
 - **Stars, canisters and crabs** are in new places every time you start, so each run is a little different.
 - **Timer** starts when you first drive and stops at the finish. Every star you miss adds 5 seconds
   to your total time (`MISSED_STAR_PENALTY` in `src/scenes/GameScene.js`). Each level's best time is remembered in that
@@ -130,6 +139,7 @@ src/snowman.js          the evil snowman enemy (snow level): hops, throws snowba
 src/snowball.js         a thrown snowball (or octopus ink): rolls at the truck leaving a fading trail, bursts on a hit
 src/pufferfish.js       the pufferfish enemy (sea level): swims, puffs up when the truck is near, squish
 src/octopus.js          the octopus enemy (sea level): creeps, squirts ink, squish
+src/kingcrab.js         the King Crab boss (level 6): stomps, slams a claw, throws rocks, sleeps, bonk x3
 src/sound.js            sound effects, generated in code (no audio files)
 src/music.js            background music: 16-bit-style instruments, echo, and one song per look
 assets/sprites/         the truck parts as transparent PNGs
