@@ -57,6 +57,10 @@ export class GameScene extends Phaser.Scene {
     this.puffTimer = 0;
     this.pebbleTimer = 0;
     this.debris = []; // flying things: pebbles, smashed boxes, confetti
+    // not blown up (yet). The scene object is reused by TRY AGAIN, so reset it here.
+    this.crashed = false;
+    this.wreck = null;
+    this.wreckBits = [];
     this.nitro = { charges: NITRO_START, time: 0 };
     this.lineTimer = 0;
     this.elapsed = 0; // race time in seconds
