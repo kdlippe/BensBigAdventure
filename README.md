@@ -2,7 +2,7 @@
 
 **Ben's Monster Truck Rally**: a side-scrolling monster truck game for a 6-year-old, built with [Phaser 3](https://phaser.io/).
 Drive over bumpy hills, launch off ramps, smash cardboard boxes, grab nitro canisters for speed boosts, and collect gold
-stars on the way to the finish gate. No game over: you can't fail, only have fun. A timer lets you chase your best time.
+stars on the way to the finish gate. No game over: a crash or a fall into a pit just means trying the level again. A timer lets you chase your best time.
 
 ## Play it
 
@@ -54,12 +54,15 @@ it's always the latest version.
 - **Braking**: pressing back while boosting ends the boost and skids the truck smoothly to a stop
   (keep holding it to reverse).
 - **Crabs** (up to 3 per level) scuttle back and forth. Jump and land on one to squish it (and bounce
-  high); drive into one and it pinches you back (and ends a nitro boost).
+  high); drive into one and KA-BOOM, the truck blows apart (see below).
 - **Spiders** replace the crabs on the spooky levels (3–4): they dangle on a thread, dropping down and
   climbing back up. Drive under one while it's high, jump over it when it's low, or land on it to squish it.
 - **Rattlesnakes** replace the crabs on the desert level (5): they slither back and forth, rattling.
 - Any enemy you touch while in the air and above its middle gets squished, so a jump in time always
-  works; driving into one on the ground bumps you back.
+  works.
+- **Crashing**: touching an enemy without squishing it blows the truck up. There's a big explosion,
+  the smashed truck flops down smoking, the wheels, shocks and bolts fly off and bounce away, and
+  then you try the level again.
 - **Stars, canisters and crabs** are in new places every time you start, so each run is a little different.
 - **Timer** starts when you first drive and stops at the finish. Every star you miss adds 5 seconds
   to your total time (`MISSED_STAR_PENALTY` in `src/scenes/GameScene.js`). Each level's best time is remembered in that

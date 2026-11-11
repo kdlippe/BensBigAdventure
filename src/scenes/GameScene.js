@@ -340,6 +340,13 @@ export class GameScene extends Phaser.Scene {
     const t = this.t;
     const ground = this.level.groundY;
 
+    // blown up: just the flying pieces (and the enemies) move
+    if (this.crashed) {
+      this.updateWreck(dt);
+      for (const c of this.crabs) if (!c.squished) c.update(dt, time, ground);
+      return;
+    }
+
     // ---- throttle ----
     let throttle = 0;
     if (!this.finished && !t.inPit) {
@@ -615,7 +622,8 @@ export class GameScene extends Phaser.Scene {
       // the ground (or hitting it from below) bumps you back.
       const middle = (c.top + (c.bottom ?? c.top + 100)) / 2;
       if (!t.grounded && prevBottom <= middle) this.squishCrab(c);
-      else if (this.bumpCooldown <= 0) this.bumpCrab(c);
+      else this.crash(c);
+      if (this.crashed) return;
     }
   }
 
@@ -632,18 +640,139 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.shake(120, 0.005);
   }
 
-  bumpCrab(c) {
+  // Touched an enemy without squishing it: KA-BOOM! The truck blows apart -
+  // the wreck pops up, wheels, shocks and bits fly off and bounce - then try again.
+  crash(c) {
     const t = this.t;
-    const away = t.x < c.x ? -1 : 1;
-    t.vx = away * 300;
-    t.vy = -380;
-    t.grounded = false;
-    t.airTime = 0.2;
-    this.nitro.time = 0; // a crab pinch ends the boost
-    this.bumpCooldown = 0.8;
+    this.crashed = true;
+    this.finished = true; // stops the timer and the controls
+    this.totalTime = this.elapsed; // what the stopped clock shows
+    this.nitro.time = 0;
+    this.jets.forEach((j) => j.setVisible(false));
+    this.fire.stop();
+    sfx.engineStop();
+    sfx.boom();
+    music.duck(3);
     c.snap();
-    sfx.bump();
-    this.cameras.main.shake(150, 0.008);
+
+    const tr = this.truck;
+    const centre = tr.toWorld(tr.centreLocal.x, tr.centreLocal.y);
+    const away = t.x < c.x ? -1 : 1; // pieces fly back, away from the enemy
+    tr.container.setVisible(false);
+    this.wreckBits = [];
+    const width = (key) => this.textures.get(key).getSourceImage().width;
+    const piece = (key, x, y, size, vx, vy, spin, depth = 31) => {
+      const img = this.add.image(x, y, key).setDepth(depth);
+      img.setScale(size / width(key));
+      this.wreckBits.push({ img, vx, vy, spin, r: img.displayHeight / 2, rest: false });
+      return img;
+    };
+    const rnd = Phaser.Math.FloatBetween;
+
+    // the smashed truck: about the truck body's size, hops up and lands
+    const bodyW = width('truck_body') * 0.32 * 1.05;
+    piece('wreck_body', centre.x, centre.y + 20, bodyW, away * 50, -480, away * 0.35, 30);
+    this.wreck = this.wreckBits[0];
+    this.wreck.upright = true; // settles flat when it stops
+
+    // the four wheels: two broken ones in front, the far ones behind, darker
+    const hub = (lx) => tr.toWorld(lx, 0);
+    const wheels = [
+      ['wreck_wheel1', hub(-98), away * rnd(250, 380), -rnd(650, 800), 31],
+      ['wreck_wheel2', hub(98), -away * rnd(80, 200), -rnd(700, 900), 31],
+      ['wreck_wheel2', hub(-74), away * rnd(400, 520), -rnd(500, 650), 29],
+      ['wreck_wheel1', hub(122), -away * rnd(300, 420), -rnd(550, 700), 29],
+    ];
+    wheels.forEach(([key, p, vx, vy, depth], i) => {
+      const w = piece(key, p.x, p.y, WHEEL_R * 2 * (i < 2 ? 1 : 0.95), vx, vy, vx / WHEEL_R, depth);
+      if (i >= 2) w.setTint(0x8a8a8a);
+    });
+
+    // shocks, fenders, bolts and a nut fly everywhere
+    const bits = [
+      ['wreck_shock1', 70], ['wreck_shock2', 60], ['wreck_shock3', 66],
+      ['wreck_part1', 46], ['wreck_part2', 50], ['wreck_part3', 32],
+      ['wreck_part4', 44], ['wreck_part5', 22], ['wreck_part6', 30],
+    ];
+    for (const [key, size] of bits) {
+      const dir = Math.random() < 0.7 ? away : -away;
+      piece(key, centre.x + rnd(-60, 60), centre.y + rnd(-30, 30), size,
+        dir * rnd(150, 550), -rnd(500, 1000), rnd(-12, 12), 32);
+    }
+
+    // the explosion: a flash and one big burst
+    const cam = this.cameras.main;
+    cam.flash(180, 255, 236, 180);
+    cam.shake(450, 0.02);
+    const s = 420 / width('boom_big');
+    const boom = this.add.image(centre.x, centre.y - 10, 'boom_big').setDepth(40).setScale(s * 0.1).setAlpha(0);
+    this.tweens.add({ targets: boom, alpha: 1, scale: s, duration: 220, ease: 'Back.out' });
+    this.tweens.add({ targets: boom, alpha: 0, scale: s * 1.15, duration: 450, delay: 450, onComplete: () => boom.destroy() });
+
+    // the wreck smokes
+    this.smokeTimer = 0.2;
+
+    const who = { spooky: 'spider', desert: 'snake' }[this.level.theme] || 'crab';
+    this.time.delayedCall(1600, () =>
+      this.fail({ title: 'KA-BOOM!', sub: `Jump on the ${who} to squish it!`, sound: false })
+    );
+  }
+
+  // pieces of the blown-up truck: fly, spin, bounce and settle on the ground
+  updateWreck(dt) {
+    const ground = this.level.groundY;
+    for (const d of this.wreckBits) {
+      if (d.rest) continue;
+      const img = d.img;
+      d.vy += GRAVITY * dt;
+      img.x += d.vx * dt;
+      img.y += d.vy * dt;
+      img.rotation += d.spin * dt;
+      const floor = ground(img.x) - d.r + 6;
+      if (img.y > floor) {
+        img.y = floor;
+        if (d.upright) {
+          img.rotation *= Math.pow(0.0005, dt); // the wreck flops down flat
+          d.spin = 0;
+        }
+        if (d.vy > 220) {
+          d.vy = -d.vy * 0.35; // bounce
+          d.vx *= 0.6;
+          d.spin *= 0.5;
+        } else {
+          d.vy = 0;
+          d.vx *= Math.pow(0.04, dt); // skid to a stop
+          d.spin = d.upright ? 0 : d.vx / d.r; // round things roll
+          if (Math.abs(d.vx) < 8) {
+            d.rest = true;
+            if (d.upright) this.tweens.add({ targets: img, rotation: 0, duration: 300, ease: 'Back.out' });
+          }
+        }
+      }
+    }
+
+    // smoke rising from the wreck
+    if (this.wreck) {
+      this.smokeTimer -= dt;
+      if (this.smokeTimer <= 0) {
+        this.smokeTimer = 0.18;
+        const w = this.wreck.img;
+        const puff = this.add.image(w.x + Phaser.Math.Between(-40, 40), w.y - 40, Math.random() < 0.5 ? 'puff' : 'puff2')
+          .setScale(0.15)
+          .setTint(0x555555)
+          .setAlpha(0.8)
+          .setDepth(33);
+        this.tweens.add({
+          targets: puff,
+          y: puff.y - 160,
+          x: puff.x + Phaser.Math.Between(-30, 30),
+          scale: 0.45,
+          alpha: 0,
+          duration: 1400,
+          onComplete: () => puff.destroy(),
+        });
+      }
+    }
   }
 
   startNitro() {
@@ -782,22 +911,24 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard.once('keydown-ENTER', () => go(primaryLevel));
   }
 
-  // Fell in a pit: try the level again.
-  fail() {
+  // Fell in a pit (or blew up): try the level again.
+  fail({ title = 'Oops! Into the pit!', sub = 'Jump over the hole next time', sound = true } = {}) {
     this.failed = true;
     this.finished = true; // stops the timer and the controls
     this.totalTime = this.elapsed;
     this.touch.drive = this.touch.back = false;
     this.controls.forEach((c) => c.disableInteractive().setAlpha(0.4));
-    sfx.fall();
-    music.duck(2);
+    if (sound) {
+      sfx.fall();
+      music.duck(2);
+    }
     this.time.delayedCall(500, () => {
       const { width } = this.scale;
       const g = this.add.graphics().setScrollFactor(0).setDepth(160);
       g.fillStyle(OUTLINE).fillRoundedRect(width / 2 - 300, 180, 600, 330, 40);
       g.fillStyle(0xffffff).fillRoundedRect(width / 2 - 292, 188, 584, 314, 34);
-      const t1 = this.add.text(width / 2, 260, 'Oops! Into the pit!', textStyle(54, '#ff7043')).setOrigin(0.5);
-      const t2 = this.add.text(width / 2, 330, 'Jump over the hole next time', textStyle(30, '#546e7a')).setOrigin(0.5);
+      const t1 = this.add.text(width / 2, 260, title, textStyle(54, '#ff7043')).setOrigin(0.5);
+      const t2 = this.add.text(width / 2, 330, sub, textStyle(30, '#546e7a')).setOrigin(0.5);
       [t1, t2].forEach((o) => o.setScrollFactor(0).setDepth(161));
       let busy = false;
       const retry = () => {

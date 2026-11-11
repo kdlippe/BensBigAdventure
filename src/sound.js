@@ -105,6 +105,16 @@ class Sfx {
     [988, 1319].forEach((n, i) => this.tone(n, 0.06, { type: 'square', vol: 0.06, delay: 0.05 + i * 0.07 })); // snip snip
   }
 
+  // the truck blows up: a deep boom, a roar of noise, then bits clattering down
+  boom() {
+    this.tone(120, 0.7, { vol: 0.6, slideTo: 30 });
+    this.noise(0.9, { vol: 0.55, freq: 300 });
+    this.noise(0.4, { vol: 0.35, freq: 2200 });
+    [0.45, 0.62, 0.8, 1.0].forEach((d, i) =>
+      this.tone(1400 + i * 260, 0.05, { type: 'square', vol: 0.05, delay: d })
+    );
+  }
+
   fall() {
     this.tone(880, 1.0, { type: 'triangle', vol: 0.2, slideTo: 140 }); // whistle down...
     this.tone(90, 0.4, { vol: 0.4, slideTo: 40, delay: 0.95 }); // ...bonk
