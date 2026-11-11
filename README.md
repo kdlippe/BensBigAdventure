@@ -1,7 +1,7 @@
 # BensBigAdventure
 
 **Ben's Monster Truck Rally**: a side-scrolling monster truck game for a 6-year-old, built with [Phaser 3](https://phaser.io/).
-Drive over bumpy hills, launch off ramps, smash cardboard boxes, grab nitro canisters for speed boosts, and collect gold
+Pick a truck (Ben's truck or the ghost truck), then drive over bumpy hills, launch off ramps, smash cardboard boxes, grab nitro canisters for speed boosts, and collect gold
 stars on the way to the finish gate. No game over: a crash or a fall into a pit just means trying the level again. A timer lets you chase your best time.
 
 ## Play it
@@ -10,6 +10,25 @@ stars on the way to the finish gate. No game over: a crash or a fall into a pit 
 
 Open that link in any browser: laptop, tablet or phone, from anywhere. There's nothing to install, and
 it's always the latest version.
+
+### Pick your truck
+
+![The title screen: Ben's orange-and-blue truck and the purple-and-green ghost truck parked side by side on the grass, with BEN'S TRUCK and GHOST TRUCK name tags and a GO! button](docs/screenshots/title.jpg)
+
+On the title screen, tap a truck (or its name tag) to pick it, then tap **GO!** (or the level
+button). The picked truck bounces on its springs; the other one is greyed out.
+
+| Truck | Looks like |
+|---|---|
+| **Ben's truck** | orange and blue with flames, orange wheels (the one in the level pictures below) |
+| **Ghost truck** | a purple-and-green van with ghosts, a haunted house and a skull on the side, a lime-green tube chassis with coil shocks, and green-and-purple wheels |
+
+Either truck drives exactly the same, on every level. Under the sea each one wears its own goggles
+and snorkel, and the little truck on the progress bar matches the one you picked. The pick is
+remembered in that browser, so it's already chosen next time. You can change trucks any time from
+the title screen (🏠 in a level goes back to it) and carry on from the level you reached.
+
+### The levels
 
 | Level 1: the meadow | Level 2: the spooky graveyard |
 |---|---|
@@ -27,7 +46,7 @@ it's always the latest version.
 - On an iPad, use Safari's Share button → "Add to Home Screen" for an app icon. Safari can't lock the
   screen sideways, so use the rotation lock in Control Center. If the tablet is held upright, the game
   shows a "Turn me sideways!" screen.
-- Progress (the level reached and best times) is saved in that browser, so each tablet or laptop keeps its own.
+- Progress (the level reached, best times and the truck picked) is saved in that browser, so each tablet or laptop keeps its own.
 
 ## Controls
 
@@ -57,10 +76,8 @@ it's always the latest version.
   gravity, so jumps go higher and drift down slowly, and ramps send it on long, slow flights. The
   exhaust blows bubbles, and the nitro sprays a gush of water and bubbles instead of flames.
   (`physics` in `src/level.js`.)
-- **Pick a truck** on the title screen: Ben's orange-and-blue truck or the purple-and-green
-  **ghost truck** (ghosts, a haunted house and a skull on the side, lime-green chassis and coil
-  shocks). Tap a truck or its name; the pick is remembered. Under the sea the ghost truck wears its
-  own goggles and snorkel. (`?truck=1` or `?truck=2` in the address overrides the pick.)
+- **Two trucks** to pick from on the title screen (see [Pick your truck](#pick-your-truck)). Adding
+  `?truck=1` or `?truck=2` to the address overrides the pick (handy for testing).
 - **Ramps** on every level launch you into the air.
 - **Pits** (as wide as the truck): level 1 has none. Level 2 has 2, each with a ramp right before it
   that flies you over. Levels 3, 4 and 5 have 3: 1 with a ramp, and 2 with no ramp, so you jump those
@@ -86,8 +103,8 @@ it's always the latest version.
 - Any enemy you touch while in the air and above its middle gets squished, so a jump in time always
   works.
 - **Crashing**: touching an enemy without squishing it blows the truck up. There's a big explosion,
-  the smashed truck flops down smoking, the wheels, shocks and bolts fly off and bounce away, and
-  then you try the level again.
+  the smashed truck flops down smoking, the wheels, shocks and bolts fly off and bounce away (the
+  ghost truck's whole green chassis goes flying too), and then you try the level again.
 - **The King Crab** (level 6, the finale) waits in a flat arena with its own fast boss tune. Its
   health shows at the top as a crown and three hearts. Awake it's far too tall to land on, and
   bumping into it shoves the truck back (it never blows the truck up). It stomps about, raises a
@@ -126,16 +143,17 @@ you never see a mix of old and new code.)
 ```
 index.html              page that loads Phaser (from a CDN) and the game
 src/main.js             game setup
-src/scenes/BootScene.js loads the truck art, draws stars/boxes/buttons
-src/scenes/TitleScene.js title screen: GO! / NEW GAME / keep going
+src/scenes/BootScene.js loads the truck art, draws stars/boxes/buttons and both trucks' progress-bar icons
+src/scenes/TitleScene.js title screen: pick a truck, GO! / NEW GAME / keep going
 src/scenes/GameScene.js the level: driving, jumping, boxes, stars, finish
 src/level.js            the 4 levels: ramps, box stacks, pits, stars, canisters, crabs, scenery
-src/progress.js         level reached and best time per level (saved in the browser)
+src/progress.js         level reached, best time per level and the truck picked (saved in the browser)
 src/scenery.js          backdrop, tiled dirt and the bendy grass strip, per theme (meadow / spooky / desert)
 src/groundArt.js        grass strip sizes per theme (generated from the art)
 src/rampProfile.js      the wooden ramp's curve (generated from the art)
 src/flameArt.js         where the nitro flame leaves the pipe (generated from the art)
-src/truck.js            the truck drawing (body, wheels, V shocks), normal or with a snorkel
+src/truck.js            the truck drawing (body, wheels, shocks or chassis): its LOOKS are Ben's truck and the
+                        ghost truck, each normal or with a snorkel
 src/crab.js             the crab enemy: walking animation and squish
 src/spider.js           the spider enemy (spooky levels): dangles on a thread, squish
 src/snake.js            the rattlesnake enemy (desert level): slithers and rattles, squish
@@ -163,6 +181,9 @@ docs/screenshots/       screenshots used in this README
   layout is random but the same every time you play it; stars, canisters and crabs move every play.
 - **How the truck feels**: the constants at the top of `src/scenes/GameScene.js`
   (`MAX_SPEED`, `JUMP_SPEED`, `GRAVITY`, `RAMP_BOOST`, suspension `SPRING`/`DAMPING`, and the `NITRO_*` settings).
+- **The trucks**: each truck's look (body picture, size, where it sits, wheels, chassis, exhaust
+  pipes, wreck) is in the `LOOKS` table at the top of `src/truck.js`. The ghost truck's pictures
+  are `assets/env/truck2_*.png`, cut from `art/source/truck2*.png` by `tools/slice_env.py`.
 - **New art**: replace the PNGs in `assets/sprites/` with the same file names. If you get a new
   art sheet, re-run `python tools/slice_sprites.py`; for new ground/scenery art, replace the files in
   `art/source/` and re-run `python tools/slice_env.py` (both need `pip install pillow numpy scipy`).
