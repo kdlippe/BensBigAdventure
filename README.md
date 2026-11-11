@@ -76,7 +76,7 @@ it's always the latest version.
   low along the ground, kicking up a trail of snow dust that fades away: jump while driving at one
   and it rolls underneath. One that hits bursts into a puff of snow and knocks the truck back (and ends a boost).
 - **Pufferfish and octopuses** take turns on the sea level (5): 3 pufferfish and 2 octopuses. Pufferfish swim back and forth and
-  keep puffing up big and spiky (then letting it out) while the truck is close: land on one while
+  keep puffing up big and spiky for 2 seconds, then staying small for 5, while the truck is close: land on one while
   it's small to squish it, but a spiky one blows the truck up even if you land on it, so jump right over it. Octopuses creep about and squirt clouds of ink
   that roll along the seabed at the truck, like the snowballs: jump over them.
 - Any enemy you touch while in the air and above its middle gets squished, so a jump in time always
