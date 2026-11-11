@@ -1,9 +1,9 @@
 // Background music in a 16-bit (SNES-era) style, made with the Web Audio API:
 // a square-wave lead with a little vibrato, a round triangle bass, a soft
-// string pad, punchy drums, and the trademark echo. Five original songs, one
-// per level look. Nothing is loaded from files.
+// string pad, punchy drums, and the trademark echo. Original songs: one per
+// level look, and a boss fight tune. Nothing is loaded from files.
 //
-// music.play('meadow' | 'spooky' | 'desert' | 'snow' | 'sea'), music.stop(), music.duck()
+// music.play('meadow' | 'spooky' | 'desert' | 'snow' | 'sea' | 'boss'), music.stop(), music.duck()
 // It shares the sound effects' AudioContext, so call it after sfx.unlock().
 
 import { sfx } from './sound.js';
@@ -95,6 +95,22 @@ const SONGS = {
       Bb5:2 A5:2 F5:4 D5:8
       D5:2 G5:2 Bb5:4 A5:2 G5:2 E5:4
       F5:8 C5:4 A4:4`,
+  },
+  // the King Crab fight, A minor: fast and bold, punchy square-wave lead
+  boss: {
+    bpm: 150,
+    lead: 'pulse',
+    style: 'pop',
+    chords: ['Am', 'F', 'C', 'G', 'Am', 'F', 'E', 'E'],
+    melody: `
+      A4:2 C5:2 E5:2 A5:4 G5:2 E5:4
+      F5:2 E5:2 C5:2 A4:2 C5:4 -:4
+      E5:2 G5:2 C6:4 B5:2 G5:2 E5:4
+      D5:2 G5:2 B5:4 A5:2 G5:2 D5:4
+      A5:2 A5:2 G5:2 A5:2 C6:4 A5:4
+      F5:2 G5:2 A5:2 F5:2 C5:4 F5:4
+      E5:2 G#5:2 B5:4 E6:4 D6:4
+      B5:2 G#5:2 E5:4 -:8`,
   },
 };
 

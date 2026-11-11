@@ -13,6 +13,7 @@ import { Snake } from '../snake.js';
 import { Snowman } from '../snowman.js';
 import { Pufferfish } from '../pufferfish.js';
 import { Octopus } from '../octopus.js';
+import { KingCrab, KING_HEALTH } from '../kingcrab.js';
 
 // ---- feel knobs (tweak these to make the truck faster, floatier, bouncier) ----
 const GRAVITY = 1500;
@@ -106,6 +107,10 @@ export class GameScene extends Phaser.Scene {
     // which enemy each look has (underwater: pufferfish and octopuses take turns)
     const enemies = { spooky: [Spider], desert: [Snake], snow: [Snowman], sea: [Pufferfish, Octopus] }[this.level.theme] || [Crab];
     this.crabs = this.level.crabs.map((c, i) => new enemies[i % enemies.length](this, c));
+    // the boss arena (the last level)
+    this.boss = this.level.boss === 'kingcrab'
+      ? new KingCrab(this, { x: L * 0.62, minX: 1100, maxX: L - 650 })
+      : null;
     this.bumpCooldown = 0;
 
     this.cans = this.level.nitro.map((n, i) => {
@@ -152,7 +157,7 @@ export class GameScene extends Phaser.Scene {
     this.events.once('shutdown', () => sfx.engineStop());
 
     // each look has its own tune (keeps playing if it's already on)
-    music.play(this.level.theme);
+    music.play(this.level.music || this.level.theme);
   }
 
   // ------------------------------------------------------------------ drawing
@@ -188,6 +193,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     // finish gate: the spooky and desert arches are wide, so they're a bit lower than the flag gate
+    if (lv.boss) return; // the boss arena has no finish gate: beat the boss to win
     const [gateKey, gateScale] = look('finish_gate', theme === 'meadow' ? 0.95 : 0.8);
     this.add.image(lv.finishX, lv.terrainY(lv.finishX) + 14, gateKey)
       .setOrigin(0.5, 1)
@@ -212,18 +218,24 @@ export class GameScene extends Phaser.Scene {
     const panel = this.add.graphics().setScrollFactor(0).setDepth(100);
     panel.fillStyle(OUTLINE).fillRoundedRect(20, 16, inner + 10, 74, 37);
     panel.fillStyle(0xffffff).fillRoundedRect(25, 21, inner, 64, 32);
-    this.add.image(62, 53, 'star').setScale(0.6).setScrollFactor(0).setDepth(101);
+    const starIcon = this.add.image(62, 53, 'star').setScale(0.6).setScrollFactor(0).setDepth(101);
+    // the boss arena has no stars: no star counter (the home button moves over)
+    let starsW = inner;
+    if (this.boss) {
+      [this.starText, panel, starIcon].forEach((o) => o.setVisible(false));
+      starsW = -10;
+    }
 
     // which level (under the progress bar) and a home button (back to the title)
     const pill = this.add.graphics().setScrollFactor(0).setDepth(100);
     pill.fillStyle(OUTLINE).fillRoundedRect(580, 72, 170, 44, 22);
     pill.fillStyle(0xff7043).fillRoundedRect(584, 76, 162, 36, 18);
-    this.add.text(665, 93, `LEVEL ${this.levelNum}`, textStyle(28))
+    this.add.text(665, 93, this.boss ? 'BOSS!' : `LEVEL ${this.levelNum}`, textStyle(28))
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setDepth(101);
     // sits just right of the star bubble (whose width depends on the font), with a gap
-    const homeX = 20 + inner + 10 + 18 + 32;
+    const homeX = 20 + starsW + 10 + 18 + 32;
     const home = this.add.image(homeX, 53, 'btn_home').setScrollFactor(0).setDepth(110).setInteractive({ useHandCursor: true });
     home.on('pointerdown', () => {
       sfx.button();
@@ -232,17 +244,21 @@ export class GameScene extends Phaser.Scene {
     });
     this.homeBtn = home;
 
-    // progress bar to the finish flag
-    const bx = 440;
-    const bw = 450;
-    const bar = this.add.graphics().setScrollFactor(0).setDepth(100);
-    bar.fillStyle(OUTLINE).fillRoundedRect(bx - 5, 33, bw + 10, 34, 17);
-    bar.fillStyle(0xffffff).fillRoundedRect(bx, 38, bw, 24, 12);
-    this.progressFill = this.add.graphics().setScrollFactor(0).setDepth(101);
-    this.progressBar = { x: bx, w: bw };
-    // pole stands just below the bar; its top lines up with the other bubbles, clear of the screen edge
-    this.add.image(bx + bw + 10, 74, 'flag').setScale(0.2).setScrollFactor(0).setDepth(102).setOrigin(0.1, 1);
-    this.progressTruck = this.add.image(bx, 42, 'truck_icon').setScale(0.19).setScrollFactor(0).setDepth(103);
+    if (this.boss) {
+      this.drawBossHud(); // the boss's health instead of the progress bar
+    } else {
+      // progress bar to the finish flag
+      const bx = 440;
+      const bw = 450;
+      const bar = this.add.graphics().setScrollFactor(0).setDepth(100);
+      bar.fillStyle(OUTLINE).fillRoundedRect(bx - 5, 33, bw + 10, 34, 17);
+      bar.fillStyle(0xffffff).fillRoundedRect(bx, 38, bw, 24, 12);
+      this.progressFill = this.add.graphics().setScrollFactor(0).setDepth(101);
+      this.progressBar = { x: bx, w: bw };
+      // pole stands just below the bar; its top lines up with the other bubbles, clear of the screen edge
+      this.add.image(bx + bw + 10, 74, 'flag').setScale(0.2).setScrollFactor(0).setDepth(102).setOrigin(0.1, 1);
+      this.progressTruck = this.add.image(bx, 42, 'truck_icon').setScale(0.19).setScrollFactor(0).setDepth(103);
+    }
 
     // race timer (top right)
     const tp = this.add.graphics().setScrollFactor(0).setDepth(100);
@@ -271,10 +287,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   updateHud() {
-    const p = Phaser.Math.Clamp((this.t.x - 300) / (this.level.finishX - 300), 0, 1);
-    const { x, w } = this.progressBar;
-    this.progressFill.clear().fillStyle(0x4caf50).fillRoundedRect(x, 38, Math.max(24, w * p), 24, 12);
-    this.progressTruck.x = x + w * p;
+    if (this.boss) {
+      this.bossHearts.forEach((h, i) => h.setAlpha(i < this.boss.health ? 1 : 0.2));
+    } else {
+      const p = Phaser.Math.Clamp((this.t.x - 300) / (this.level.finishX - 300), 0, 1);
+      const { x, w } = this.progressBar;
+      this.progressFill.clear().fillStyle(0x4caf50).fillRoundedRect(x, 38, Math.max(24, w * p), 24, 12);
+      this.progressTruck.x = x + w * p;
+    }
 
     this.timerText.setText(formatTime(this.finished ? this.totalTime : this.elapsed));
 
@@ -525,6 +545,7 @@ export class GameScene extends Phaser.Scene {
 
     this.updateCrabs(dt, time, prevBottom);
     this.updateSnowballs(dt, true);
+    if (this.boss) this.updateBoss(dt, time, prevBottom);
 
     // ---- suspension & body tilt ----
     t.squashV += (-SPRING * t.squash - DAMPING * t.squashV) * dt;
@@ -549,7 +570,7 @@ export class GameScene extends Phaser.Scene {
     this.scrollBackdrop(this.cameras.main.scrollX);
     sfx.engine(t.vx, throttle !== 0);
 
-    if (!this.finished && t.x >= this.level.finishX) this.finish();
+    if (!this.finished && !this.boss && t.x >= this.level.finishX) this.finish();
   }
 
   // ------------------------------------------------------------------ gameplay
@@ -646,6 +667,75 @@ export class GameScene extends Phaser.Scene {
       else this.crash(c);
       if (this.crashed) return;
     }
+  }
+
+  // ------------------------------------------------------------------ the boss
+
+  // the boss's health instead of the progress bar: a crown and a heart per hit left
+  drawBossHud() {
+    const cx = 665;
+    const panel = this.add.graphics().setScrollFactor(0).setDepth(100);
+    panel.fillStyle(OUTLINE).fillRoundedRect(cx - 190, 14, 380, 54, 27);
+    panel.fillStyle(0xffffff).fillRoundedRect(cx - 185, 19, 370, 44, 22);
+    this.add.image(cx - 140, 41, 'king_crown').setScale(0.32).setScrollFactor(0).setDepth(101);
+    this.add.text(cx - 95, 41, 'KING CRAB', textStyle(26, '#e53935')).setOrigin(0, 0.5).setScrollFactor(0).setDepth(101);
+    this.bossHearts = [];
+    for (let i = 0; i < KING_HEALTH; i++) {
+      const h = this.add.text(cx + 82 + i * 34, 41, '❤', { fontFamily: 'Arial', fontSize: '30px', color: '#e53935' })
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setDepth(101);
+      this.bossHearts.push(h);
+    }
+  }
+
+  updateBoss(dt, time, prevBottom) {
+    const t = this.t;
+    const b = this.boss;
+    b.update(dt, time, this.level.groundY);
+    // the arena's walls
+    const L = this.level.length;
+    if (t.x < 220) {
+      t.x = 220;
+      t.vx = Math.max(0, t.vx);
+    } else if (t.x > L - 260) {
+      t.x = L - 260;
+      t.vx = Math.min(0, t.vx);
+    }
+    if (this.finished) return;
+    this.bossCooldown = Math.max(0, (this.bossCooldown || 0) - dt);
+    const hit = b.hitTest(t, prevBottom, WHEEL_R);
+    if (hit === 'bonk') {
+      b.bonk();
+      sfx.squish();
+      this.cameras.main.shake(200, 0.012);
+      t.vy = -this.jumpSpeed * 1.25; // boing!
+      t.vx = -Math.sign(b.x - t.x || 1) * 320;
+      t.grounded = false;
+      t.airTime = 0.2;
+      this.dustAt(b.x, this.level.groundY(b.x), 1.5);
+      if (b.defeated) this.time.delayedCall(1800, () => this.finish());
+    } else if (hit === 'bump' && this.bossCooldown <= 0) {
+      // too tall to stomp while it stands: it shoves the truck away
+      this.bossCooldown = 0.6;
+      const away = t.x < b.x ? -1 : 1;
+      t.vx = away * 420;
+      t.vy = -340;
+      t.grounded = false;
+      t.airTime = 0.2;
+      this.nitro.time = 0;
+      sfx.bump();
+      this.cameras.main.shake(160, 0.01);
+    }
+  }
+
+  bossRoar() {
+    sfx.bump();
+  }
+
+  bossSlam(x, y) {
+    sfx.land(1.5);
+    sfx.crunch();
   }
 
   // a snowman threw one
@@ -921,20 +1011,28 @@ export class GameScene extends Phaser.Scene {
 
     const parts = [g];
     const last = this.levelNum >= this.level.count;
-    const heading = last ? `You beat all ${this.level.count} levels, Ben!` : `Level ${this.levelNum} done, Ben!`;
+    const heading = this.boss ? 'You beat the King Crab, Ben!'
+      : last ? `You beat all ${this.level.count} levels, Ben!` : `Level ${this.levelNum} done, Ben!`;
     const head = this.add.text(width / 2, 145, heading, textStyle(56, '#ff7043')).setOrigin(0.5);
     if (head.width > 600) head.setScale(600 / head.width);
     parts.push(head);
-    parts.push(this.add.image(width / 2 - 90, 220, 'star').setScale(0.8));
-    parts.push(this.add.text(width / 2 - 40, 220, `${this.starCount} / ${this.stars.length}`, textStyle(54, '#ffc928')).setOrigin(0, 0.5));
+    if (this.boss) {
+      // the end of the game: the King Crab's crown as a trophy, and how long the fight took
+      parts.push(this.add.image(width / 2, 245, 'king_crown').setScale(0.9));
+      parts.push(this.add.text(width / 2, 340, 'YOU WIN THE CROWN!', textStyle(40, '#ffc928')).setOrigin(0.5));
+      parts.push(this.add.text(width / 2, 400, `Time  ${formatTime(this.totalTime)}`, textStyle(50, '#1565c0')).setOrigin(0.5));
+    } else {
+      parts.push(this.add.image(width / 2 - 90, 220, 'star').setScale(0.8));
+      parts.push(this.add.text(width / 2 - 40, 220, `${this.starCount} / ${this.stars.length}`, textStyle(54, '#ffc928')).setOrigin(0, 0.5));
 
-    // drive time + missed-star penalty = total
-    parts.push(this.add.text(width / 2, 285, `Drive time  ${formatTime(this.elapsed)}`, textStyle(34, '#546e7a')).setOrigin(0.5));
-    const penaltyText = this.missed > 0
-      ? `+${this.penalty} sec for ${this.missed} missed star${this.missed === 1 ? '' : 's'}`
-      : 'All the stars! No time added';
-    parts.push(this.add.text(width / 2, 330, penaltyText, textStyle(30, this.missed > 0 ? '#e53935' : '#43a047')).setOrigin(0.5));
-    parts.push(this.add.text(width / 2, 392, `Total  ${formatTime(this.totalTime)}`, textStyle(56, '#1565c0')).setOrigin(0.5));
+      // drive time + missed-star penalty = total
+      parts.push(this.add.text(width / 2, 285, `Drive time  ${formatTime(this.elapsed)}`, textStyle(34, '#546e7a')).setOrigin(0.5));
+      const penaltyText = this.missed > 0
+        ? `+${this.penalty} sec for ${this.missed} missed star${this.missed === 1 ? '' : 's'}`
+        : 'All the stars! No time added';
+      parts.push(this.add.text(width / 2, 330, penaltyText, textStyle(30, this.missed > 0 ? '#e53935' : '#43a047')).setOrigin(0.5));
+      parts.push(this.add.text(width / 2, 392, `Total  ${formatTime(this.totalTime)}`, textStyle(56, '#1565c0')).setOrigin(0.5));
+    }
     if (this.newBest) {
       const nb = this.add.text(width / 2, 455, 'NEW BEST TIME!', textStyle(42, '#43a047')).setOrigin(0.5);
       parts.push(nb);

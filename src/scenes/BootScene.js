@@ -28,6 +28,9 @@ const ENV_PNG = [
   'grass_strip_sea', 'shipwreck', 'coral_arch', 'coral_clump', 'sea_grass', 'seashells', 'anchor', 'treasure_chest',
   'puffer', 'puffer_big', 'puffer_dizzy', 'octopus', 'octopus_dizzy', 'ink_cloud', 'ink_splat',
   'truck_body_snorkel', 'wreck_body_snorkel', 'bubble_jet',
+  // the King Crab boss (level 6)
+  'king_body', 'king_claw', 'king_legs', 'king_rock', 'king_dizzy', 'king_sleep', 'king_zzz', 'king_crown',
+  'king_arm_slam', 'king_slam_burst', 'king_slam_crack', 'king_slam_dust_l', 'king_slam_dust_r',
   'fence', 'tree', 'tires', 'finish_gate',
 ];
 const OUTLINE = 0x16161a;

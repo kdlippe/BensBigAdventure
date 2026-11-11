@@ -135,6 +135,26 @@ SNORKEL_TRUCK = {  # in truck_snorkel.png (the truck dressed for the underwater 
     "bubble_jet": (358, 358, 565, 494, False),  # nitro underwater: a gush of water and bubbles
 }
 
+KING_CRAB = {  # the boss, in king_crab.png: (x0, y0, x1, y1, keep only the biggest piece?)
+    "king_body": (27, 42, 404, 343, True),  # angry, with its crown and eyes
+    "king_claw": (376, 39, 601, 331, True),  # a big raised claw
+    "king_legs": (247, 348, 533, 550, True),
+    "king_rock": (326, 560, 519, 741, True),  # the rock it throws
+    "king_dizzy": (565, 112, 1005, 485, False),  # beaten, with stars and spirals
+}
+KING_CRAB_SLEEP = {  # in king_crab_sleep.png
+    "king_sleep": (35, 169, 625, 656, True),  # fast asleep: bonk it now!
+    "king_zzz": (468, 138, 594, 298, False),
+    "king_crown": (651, 497, 789, 625, True),
+}
+KING_SLAM = {  # the claw slam: the arm (in king_arms.png) and the impact (king_slam_fx.png)
+    "king_arm_slam": ("king_arms.png", (720, 51, 953, 364), False),  # arm from the body bending down, claw punched into the ground
+    "king_slam_burst": ("king_slam_fx.png", (520, 35, 996, 356), False),  # burst of dirt and rocks
+    "king_slam_crack": ("king_slam_fx.png", (565, 385, 945, 511), True),  # crack in the ground
+    "king_slam_dust_l": ("king_slam_fx.png", (489, 530, 752, 721), False),  # dust cloud puffing left
+    "king_slam_dust_r": ("king_slam_fx.png", (754, 532, 1003, 725), False),  # ...and right
+}
+
 WRECK = {  # in truck_wreck.png (the truck blown up): (x0, y0, x1, y1, keep only the biggest piece?)
     "wreck_body": (36, 30, 588, 385, True),  # smashed truck, no wheels
     "wreck_wheel1": (29, 369, 241, 576, True),  # tire with a bite out of it
@@ -393,6 +413,22 @@ def main():
                 # its wheel wells (rear, front) are painted dark: open them up
                 part = clear_wheel_wells(part, [(40, 135, 180, 215), (280, 135, 420, 222)])
             save(part, f"{name}.png")
+
+    # the King Crab boss (level 6): pieces to build it from, and asleep
+    for sheet, boxes in (("king_crab.png", KING_CRAB), ("king_crab_sleep.png", KING_CRAB_SLEEP)):
+        src = load(sheet)
+        for name, (x0, y0, x1, y1, largest) in boxes.items():
+            img = src
+            if name == "king_dizzy":
+                # its box overlaps the tip of the raised claw: paint that out first
+                img = src.copy()
+                cx0, cy0, cx1, cy1, _ = KING_CRAB["king_claw"]
+                img[cy0:cy1, cx0:cx1] = 255
+            part = cut_white(img[y0:y1, x0:x1], hole_min=3000)
+            save(trim(keep_largest(part) if largest else part), f"{name}.png")
+    for name, (sheet, (x0, y0, x1, y1), largest) in KING_SLAM.items():
+        part = cut_white(load(sheet)[y0:y1, x0:x1], hole_min=3000)
+        save(trim(keep_largest(part) if largest else part), f"{name}.png")
 
     # crab enemy parts. The eyes are enclosed white areas, so only treat much
     # bigger enclosed white as background.

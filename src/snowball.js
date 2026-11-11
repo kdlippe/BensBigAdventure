@@ -22,6 +22,14 @@ const KINDS = {
     spin: true,
     dust: [0xc9dae8, 0xb3c8dc], // pale blue-grey, so it shows against the white snow
   },
+  rock: {
+    key: 'king_rock', // thrown by the King Crab as it winds up (the boss)
+    size: 76,
+    speed: 360,
+    gravity: 1,
+    spin: true,
+    dust: [0xc49a6c, 0x9c7650],
+  },
   ink: {
     key: 'ink_cloud', // drawn with its streak trailing to the right (it goes left)
     size: 104,
@@ -133,6 +141,22 @@ export class Snowball {
     const { scene, x, y } = this;
     this.destroyParts();
     const tex = (key) => scene.textures.get(key).getSourceImage();
+    if (this.kind === 'rock') {
+      // a puff of dust and the rocks scatter
+      for (let i = 0; i < 6; i++) {
+        const d = scene.add.image(x, y, 'puff').setTint(0xc49a6c).setScale(0.15).setDepth(41);
+        scene.tweens.add({
+          targets: d,
+          x: x + Phaser.Math.Between(-90, 90),
+          y: y - Phaser.Math.Between(20, 90),
+          scale: 0.4,
+          alpha: 0,
+          duration: 500,
+          onComplete: () => d.destroy(),
+        });
+      }
+      return;
+    }
     if (this.kind === 'ink') {
       // a big splotch of ink that spreads and fades, and splats flying off
       const cloudS = 150 / tex('ink_cloud').width;
