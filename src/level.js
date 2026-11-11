@@ -1,4 +1,4 @@
-// The 4 levels, one per look. Everything is measured in game pixels; the screen is 1280x720.
+// The 5 levels, one per look. Everything is measured in game pixels; the screen is 1280x720.
 //
 // Each level's layout (where the ramps, box stacks and pits go, and the
 // scenery) is random but the same every time you play that level (seeded by
@@ -15,11 +15,18 @@ export const LEVELS = [
   // rampPits: pits with a ramp right before them (the ramp flies you over).
   // jumpPits: pits with no ramp, so you jump them yourself.
   // crabs: enemies (crabs, spiders, rattlesnakes or snowmen, by look), at most this many.
-  // theme: 'meadow' (sunny), 'spooky' (night graveyard), 'desert' (canyon) or 'snow' (mountains) look.
+  // theme: 'meadow' (sunny), 'spooky' (night graveyard), 'desert' (canyon), 'snow' (mountains) or
+  //   'sea' (underwater) look.
+  // physics (optional): scales gravity, the jump and the ramp kick (underwater it's floaty).
   { stars: 50, length: LENGTH, ramps: 6, stacks: 7, rampPits: 0, jumpPits: 0, crabs: 2, theme: 'meadow' },
   { stars: 50, length: LENGTH, ramps: 6, stacks: 7, rampPits: 2, jumpPits: 0, crabs: 3, theme: 'spooky' },
   { stars: 50, length: LENGTH, ramps: 6, stacks: 7, rampPits: 1, jumpPits: 2, crabs: 3, theme: 'desert' },
   { stars: 50, length: LENGTH, ramps: 6, stacks: 7, rampPits: 1, jumpPits: 2, crabs: 3, theme: 'snow' },
+  {
+    // 5 creatures: they take turns, so that's 3 pufferfish and 2 octopuses
+    stars: 50, length: LENGTH, ramps: 6, stacks: 7, rampPits: 1, jumpPits: 2, crabs: 5, theme: 'sea',
+    physics: { gravity: 0.5, jump: 0.8, ramp: 0.75 },
+  },
 ];
 
 export const BOX = 80;
@@ -119,6 +126,7 @@ function layout(def, length, finishX, rand) {
 
 export function buildLevel(levelNum = 1, rand = Math.random) {
   const def = LEVELS[levelNum - 1];
+  const physics = { gravity: 1, jump: 1, ramp: 1, ...def.physics };
   const length = Math.round(def.length);
   const finishX = length - 450;
   const fixed = seeded(1000 + levelNum * 77);
@@ -205,7 +213,8 @@ export function buildLevel(levelNum = 1, rand = Math.random) {
       const gap = 85 + rand() * 25;
       for (let i = 1; i <= n; i++) {
         const t = (i * gap) / 420;
-        add(r.lipX + 30 + i * gap, lipY - 150 - 880 * t + 0.5 * 1500 * t * t);
+        // follows the truck's flight (floatier where gravity is weaker)
+        add(r.lipX + 30 + i * gap, lipY - 150 - 880 * physics.ramp * t + 0.5 * 1500 * physics.gravity * t * t);
       }
       used.take(r.backX, r.lipX + 60 + (n + 1) * gap);
     }
@@ -319,6 +328,13 @@ export function buildLevel(levelNum = 1, rand = Math.random) {
     for (const x of [120, 330, finishX + 260, finishX + 470]) put('fence', x, 0.42, 8, 22);
     // tyre stacks guarding each ramp, like a real monster truck arena
     for (const r of ramps) put('tires', r.x - 110, 0.36, 9, 10);
+    // underwater: three big sunken ships far back
+    if (def.theme === 'sea') {
+      for (const f of [0.18, 0.5, 0.8]) {
+        const x = f * length + (scenery() - 0.5) * 1500;
+        if (noPit.free(x - 250, x + 250)) put('shipwreck', x, 0.9 + scenery() * 0.15, 7, 34);
+      }
+    }
     // little things on the grass
     const small = [['tuft', 0.2], ['tuft', 0.16], ['flower', 0.22], ['mushroom', 0.2], ['rocks', 0.2]];
     for (let x = 200; x < length - 100; x += 150 + scenery() * 220) {
@@ -331,6 +347,7 @@ export function buildLevel(levelNum = 1, rand = Math.random) {
   return {
     num: levelNum,
     theme: def.theme,
+    physics,
     count: LEVELS.length,
     length,
     finishX,

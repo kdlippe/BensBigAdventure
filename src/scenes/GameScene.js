@@ -11,6 +11,8 @@ import { Crab, CRAB_HALF_WIDTH } from '../crab.js';
 import { Spider } from '../spider.js';
 import { Snake } from '../snake.js';
 import { Snowman } from '../snowman.js';
+import { Pufferfish } from '../pufferfish.js';
+import { Octopus } from '../octopus.js';
 
 // ---- feel knobs (tweak these to make the truck faster, floatier, bouncier) ----
 const GRAVITY = 1500;
@@ -48,6 +50,12 @@ export class GameScene extends Phaser.Scene {
   create(data) {
     this.levelNum = (data && data.level) || loadProgress();
     this.level = buildLevel(this.levelNum);
+    // how the truck moves on this level (underwater it's floaty)
+    const phys = this.level.physics;
+    this.gravity = GRAVITY * phys.gravity;
+    this.jumpSpeed = JUMP_SPEED * phys.jump;
+    this.rampKick = phys.ramp;
+    this.jumpRise = (this.jumpSpeed * this.jumpSpeed) / (2 * this.gravity); // how high a jump goes
     this.failed = false;
     this.lastFx = undefined; // the scene object is reused between plays
     const L = this.level.length;
@@ -95,8 +103,9 @@ export class GameScene extends Phaser.Scene {
 
     // the level's enemies: dangling spiders on spooky levels, rattlesnakes in
     // the desert, crabs in the meadow
-    const Enemy = { spooky: Spider, desert: Snake, snow: Snowman }[this.level.theme] || Crab;
-    this.crabs = this.level.crabs.map((c) => new Enemy(this, c));
+    // which enemy each look has (underwater: pufferfish and octopuses take turns)
+    const enemies = { spooky: [Spider], desert: [Snake], snow: [Snowman], sea: [Pufferfish, Octopus] }[this.level.theme] || [Crab];
+    this.crabs = this.level.crabs.map((c, i) => new enemies[i % enemies.length](this, c));
     this.bumpCooldown = 0;
 
     this.cans = this.level.nitro.map((n, i) => {
@@ -127,10 +136,12 @@ export class GameScene extends Phaser.Scene {
       squashV: 0,
       tilt: 0,
     };
-    this.truck = new Truck(this, this.t.x, this.t.y);
+    this.underwater = this.level.theme === 'sea';
+    this.truck = new Truck(this, this.t.x, this.t.y, this.underwater ? 'snorkel' : 'normal');
     this.truck.container.setDepth(30);
     this.makeFire();
     if (this.level.theme === 'snow') this.makeSnowfall();
+    if (this.underwater) this.makeBubbles();
 
     // camera looks a bit ahead of the truck
     this.cameras.main.startFollow(this.truck.container, false, 0.12, 0.08, -260, 90);
@@ -433,7 +444,7 @@ export class GameScene extends Phaser.Scene {
       if ((t.grounded || t.airTime < 0.12) && !this.finished && !t.inPit) {
         t.grounded = false;
         t.airTime = 0.2;
-        t.vy = -JUMP_SPEED;
+        t.vy = -this.jumpSpeed;
         t.squashV -= 160;
         sfx.jump();
         this.dustAt(rx, ground(rx), 0.5);
@@ -449,11 +460,11 @@ export class GameScene extends Phaser.Scene {
     // truck tips up and the wheel can swing past the lip as it levels out.
     const prevFx = this.lastFx ?? fx;
     this.lastFx = fx;
-    if (t.vx > 150 && t.y > groundHubY - 200) { // 200: a normal jump rises ~170
+    if (t.vx > 150 && t.y > groundHubY - (this.jumpRise + 30)) { // a little more than a jump rises
       for (const r of this.level.ramps) {
         if (prevFx < r.lipX && fx >= r.lipX) {
           t.grounded = false;
-          const launch = -(RAMP_BOOST + Math.min(t.vx, MAX_SPEED + 150)); // nitro adds a little, not a lot
+          const launch = -(RAMP_BOOST + Math.min(t.vx, MAX_SPEED + 150)) * this.rampKick; // nitro adds a little, not a lot
           t.vy = Math.min(t.vy, launch) - (t.vy < -200 ? 120 : 0); // already jumping: a bit extra
           t.airTime = 0.2;
           sfx.launch();
@@ -464,7 +475,7 @@ export class GameScene extends Phaser.Scene {
     // ---- vertical motion ----
     if (t.grounded) {
       const followVy = (groundHubY - t.y) / dt;
-      const fallVy = t.vy + GRAVITY * dt;
+      const fallVy = t.vy + this.gravity * dt;
       if (followVy > fallVy + 60) {
         // the ground drops away faster than we'd fall: we're airborne!
         t.grounded = false;
@@ -481,7 +492,7 @@ export class GameScene extends Phaser.Scene {
       }
     } else {
       t.airTime += dt;
-      t.vy += GRAVITY * dt;
+      t.vy += this.gravity * dt;
       t.y += t.vy * dt;
       // nose follows the flight path a little
       const flight = Phaser.Math.Clamp(Math.atan2(t.vy, Math.max(Math.abs(t.vx), 250)) * 0.4, -0.35, 0.35);
@@ -630,7 +641,8 @@ export class GameScene extends Phaser.Scene {
       // In the air and above its middle: a stomp (squish). Driving into it on
       // the ground (or hitting it from below) bumps you back.
       const middle = (c.top + (c.bottom ?? c.top + 100)) / 2;
-      if (!t.grounded && prevBottom <= middle) this.squishCrab(c);
+      // (a puffed-up, spiky pufferfish can't be squished: landing on it is a crash too)
+      if (!t.grounded && prevBottom <= middle && !c.spiky) this.squishCrab(c);
       else this.crash(c);
       if (this.crashed) return;
     }
@@ -717,8 +729,9 @@ export class GameScene extends Phaser.Scene {
     const rnd = Phaser.Math.FloatBetween;
 
     // the smashed truck: about the truck body's size, hops up and lands
-    const bodyW = width('truck_body') * 0.32 * 1.05;
-    piece('wreck_body', centre.x, centre.y + 20, bodyW, away * 50, -480, away * 0.35, 30);
+    // (underwater the wreck is the front half with its snapped snorkel)
+    const bodyW = width('truck_body') * 0.32 * (this.underwater ? 0.75 : 1.05);
+    piece(this.underwater ? 'wreck_body_snorkel' : 'wreck_body', centre.x, centre.y + 20, bodyW, away * 50, -480, away * 0.35, 30);
     this.wreck = this.wreckBits[0];
     this.wreck.upright = true; // settles flat when it stops
 
@@ -759,9 +772,11 @@ export class GameScene extends Phaser.Scene {
     // the wreck smokes
     this.smokeTimer = 0.2;
 
-    const who = { spooky: 'spider', desert: 'snake', snow: 'snowman' }[this.level.theme] || 'crab';
+    const who = { spooky: 'spider', desert: 'snake', snow: 'snowman' }[this.level.theme] ||
+      { Pufferfish: 'pufferfish', Octopus: 'octopus' }[c.constructor.name] || 'crab';
+    const tip = c.spiky ? 'Spiky pufferfish: jump right over it!' : `Jump on the ${who} to squish it!`;
     this.time.delayedCall(1600, () =>
-      this.fail({ title: 'KA-BOOM!', sub: `Jump on the ${who} to squish it!`, sound: false })
+      this.fail({ title: 'KA-BOOM!', sub: tip, sound: false })
     );
   }
 
@@ -1003,19 +1018,33 @@ export class GameScene extends Phaser.Scene {
     if (this.puffTimer <= 0 && !this.finished) {
       this.puffTimer = throttle ? 0.14 : 0.45;
       const p = this.truck.toWorld(this.truck.exhaustLocal.x, this.truck.exhaustLocal.y);
-      const puff = this.add.image(p.x, p.y, Math.random() < 0.5 ? 'puff' : 'puff2')
-        .setScale(0.12)
-        .setDepth(29)
-        .setAlpha(0.9);
-      this.tweens.add({
-        targets: puff,
-        x: p.x - 50 - Math.abs(t.vx) * 0.15,
-        y: p.y - 60,
-        scale: 0.32,
-        alpha: 0,
-        duration: 800,
-        onComplete: () => puff.destroy(),
-      });
+      if (this.underwater) {
+        // underwater the exhaust blows bubbles that wobble up and pop
+        const b = this.add.image(p.x, p.y, 'bubble').setScale(Phaser.Math.FloatBetween(0.35, 0.7)).setDepth(29).setAlpha(0.9);
+        this.tweens.add({
+          targets: b,
+          x: p.x - 30 - Math.abs(t.vx) * 0.12 + Phaser.Math.Between(-15, 15),
+          y: p.y - Phaser.Math.Between(90, 150),
+          alpha: 0,
+          duration: 1100,
+          ease: 'Sine.out',
+          onComplete: () => b.destroy(),
+        });
+      } else {
+        const puff = this.add.image(p.x, p.y, Math.random() < 0.5 ? 'puff' : 'puff2')
+          .setScale(0.12)
+          .setDepth(29)
+          .setAlpha(0.9);
+        this.tweens.add({
+          targets: puff,
+          x: p.x - 50 - Math.abs(t.vx) * 0.15,
+          y: p.y - 60,
+          scale: 0.32,
+          alpha: 0,
+          duration: 800,
+          onComplete: () => puff.destroy(),
+        });
+      }
     }
 
     // dirt flying off the back wheel when accelerating on the ground
@@ -1043,6 +1072,22 @@ export class GameScene extends Phaser.Scene {
 
   // Gently falling snow, drifting in front of the world (behind the buttons).
   // It's pinned to the screen, so it falls the same wherever the camera is.
+  // Bubbles drifting up through the water (pinned to the screen, like the snow).
+  makeBubbles() {
+    const { width, height } = this.scale;
+    this.add.particles(0, 0, 'bubble', {
+      x: { min: -50, max: width + 50 },
+      y: height + 20,
+      lifespan: 9000,
+      speedY: { min: -110, max: -50 },
+      speedX: { min: -15, max: 15 },
+      scale: { min: 0.2, max: 0.6 },
+      alpha: { start: 0.8, end: 0.2 },
+      frequency: 140,
+      advance: 9000, // already bubbling when the level starts
+    }).setScrollFactor(0).setDepth(90);
+  }
+
   makeSnowfall() {
     const { width, height } = this.scale;
     this.add.particles(0, 0, 'snowflake', {
@@ -1060,21 +1105,32 @@ export class GameScene extends Phaser.Scene {
 
   // Two flame jets (one per exhaust pipe) plus a stream of fire particles
   // that cool from white -> yellow -> orange -> red as they fly off.
+  // Underwater it's a gush of water and a stream of bubbles instead.
   makeFire() {
-    this.jets = [0, 1].map(() =>
-      this.add.image(0, 0, 'flame_jet').setOrigin(FLAME_ART.originX, FLAME_ART.originY).setDepth(29).setVisible(false)
-    );
-    this.jetScale = FLAME_LENGTH / FLAME_ART.width;
+    if (this.underwater) {
+      // bubble_jet.png sprays up and to the right from its thin end (bottom left):
+      // flipped, it sprays back from the pipe like the flame does
+      this.jets = [0, 1].map(() =>
+        this.add.image(0, 0, 'bubble_jet').setFlipX(true).setOrigin(0.95, 0.88).setDepth(29).setVisible(false)
+      );
+      this.jetScale = FLAME_LENGTH / this.textures.get('bubble_jet').getSourceImage().width;
+      this.jetTurn = -0.55; // the art already slants upwards
+    } else {
+      this.jets = [0, 1].map(() =>
+        this.add.image(0, 0, 'flame_jet').setOrigin(FLAME_ART.originX, FLAME_ART.originY).setDepth(29).setVisible(false)
+      );
+      this.jetScale = FLAME_LENGTH / FLAME_ART.width;
+      this.jetTurn = 0;
+    }
     this.fireAngle = 0;
-    this.fire = this.add.particles(0, 0, 'flare', {
+    this.fire = this.add.particles(0, 0, this.underwater ? 'bubble' : 'flare', {
       emitting: false,
-      lifespan: { min: 220, max: 420 },
+      lifespan: this.underwater ? { min: 400, max: 700 } : { min: 220, max: 420 },
       speed: { min: 220, max: 380 },
       angle: { onEmit: () => this.fireAngle + Phaser.Math.Between(-14, 14) },
-      scale: { start: 0.75, end: 0.15 },
+      scale: this.underwater ? { start: 0.5, end: 0.25 } : { start: 0.75, end: 0.15 },
       alpha: { start: 1, end: 0 },
-      color: FIRE_COLOURS,
-      colorEase: 'quad.out',
+      ...(this.underwater ? {} : { color: FIRE_COLOURS, colorEase: 'quad.out' }),
     }).setDepth(28);
   }
 
@@ -1089,9 +1145,9 @@ export class GameScene extends Phaser.Scene {
       const p = this.truck.toWorld(tip.x, tip.y);
       this.jets[i]
         .setPosition(p.x, p.y)
-        .setRotation(dir + Phaser.Math.FloatBetween(-0.08, 0.08))
-        .setScale(this.jetScale * Phaser.Math.FloatBetween(0.8, 1.1), this.jetScale * Phaser.Math.FloatBetween(0.85, 1.05))
-        .setFlipY(Math.random() < 0.5); // flipping the art each frame makes it flicker
+        .setRotation(dir + this.jetTurn + Phaser.Math.FloatBetween(-0.08, 0.08))
+        .setScale(this.jetScale * Phaser.Math.FloatBetween(0.8, 1.1), this.jetScale * Phaser.Math.FloatBetween(0.85, 1.05));
+      if (!this.underwater) this.jets[i].setFlipY(Math.random() < 0.5); // flipping the flame each frame makes it flicker
       this.fire.emitParticleAt(p.x, p.y, 2);
     });
   }

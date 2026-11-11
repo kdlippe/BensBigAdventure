@@ -1,9 +1,9 @@
 // Background music in a 16-bit (SNES-era) style, made with the Web Audio API:
 // a square-wave lead with a little vibrato, a round triangle bass, a soft
-// string pad, punchy drums, and the trademark echo. Four original songs, one
+// string pad, punchy drums, and the trademark echo. Five original songs, one
 // per level look. Nothing is loaded from files.
 //
-// music.play('meadow' | 'spooky' | 'desert' | 'snow'), music.stop(), music.duck()
+// music.play('meadow' | 'spooky' | 'desert' | 'snow' | 'sea'), music.stop(), music.duck()
 // It shares the sound effects' AudioContext, so call it after sfx.unlock().
 
 import { sfx } from './sound.js';
@@ -80,6 +80,22 @@ const SONGS = {
       A5:2 B5:2 C6:2 B5:2 A5:4 F#5:4
       G5:8 D5:4 B4:4`,
   },
+  // dreamy underwater drift, F major: wobbly whistled tune, rolling bass, bubble pops
+  sea: {
+    bpm: 96,
+    lead: 'whistle',
+    style: 'float',
+    chords: ['F', 'Am', 'Bb', 'C', 'Dm', 'Bb', 'Gm', 'C'],
+    melody: `
+      A4:4 C5:2 F5:6 E5:4
+      E5:2 C5:2 A4:4 C5:8
+      D5:4 F5:2 Bb5:6 A5:4
+      G5:2 E5:2 C5:4 -:8
+      F5:4 A5:2 D6:6 C6:4
+      Bb5:2 A5:2 F5:4 D5:8
+      D5:2 G5:2 Bb5:4 A5:2 G5:2 E5:4
+      F5:8 C5:4 A4:4`,
+  },
 };
 
 // ---------------------------------------------------------------- notes
@@ -127,6 +143,9 @@ function compile(song) {
       for (let i = 0; i < 16; i += 2) at[b + i].push({ v: 'bass', midi: root - 12 + (i % 4 === 2 ? 12 : 0), len: 2 });
     } else if (song.style === 'tick') {
       for (const [i, len] of [[0, 4], [6, 2], [8, 4], [14, 2]]) at[b + i].push({ v: 'bass', midi: root - 12, len });
+    } else if (song.style === 'float') {
+      // slow rolling bass: a long root, then the fifth and the octave
+      for (const [i, n, len] of [[0, 0, 6], [6, 7, 2], [8, 12, 6], [14, 7, 2]]) at[b + i].push({ v: 'bass', midi: root - 12 + n, len });
     } else if (song.style === 'sleigh') {
       // oom-pah: root, fifth, root, fifth
       for (let beat = 0; beat < 4; beat++) at[b + beat * 4].push({ v: 'bass', midi: root - 12 + (beat % 2 ? 7 : 0), len: 3 });
@@ -150,6 +169,10 @@ function compile(song) {
         if (i === 0 || i === 8) at[s].push({ v: 'kick' });
         if (i === 12 && bar % 2 === 1) at[s].push({ v: 'snare' });
         if (i % 4 === 0) at[s].push({ v: 'tick' });
+      } else if (song.style === 'float') {
+        // just a soft heartbeat kick and little bubble pops
+        if (i === 0 || (i === 8 && bar % 2 === 1)) at[s].push({ v: 'kick' });
+        if (i === 6 || i === 11 || (i === 14 && bar % 2 === 0)) at[s].push({ v: 'tick' });
       } else if (song.style === 'sleigh') {
         // sleigh bells: a jingle on every 8th, with a soft backbeat
         if (i === 0 || i === 8) at[s].push({ v: 'kick' });
