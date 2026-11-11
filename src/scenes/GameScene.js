@@ -742,27 +742,60 @@ export class GameScene extends Phaser.Scene {
   // on the right of the King Crab (backing up is too slow to jump onto its shell).
   makeWarpGates() {
     const L = this.level.length;
-    this.warpGates = [L - 120, 110].map((x) => {
-      const y = this.level.groundY(x) + 12; // its bottom sits in the ground
-      const glow = this.add.image(x, y, 'warp_glow').setOrigin(0.5, 1).setDepth(18);
-      const ring = this.add.image(x, y + 10, 'warp_ring').setOrigin(0.5, 1).setDepth(18);
-      // shimmer: the inside pulses
-      this.tweens.add({ targets: glow, alpha: { from: 0.75, to: 1 }, scaleX: { from: 0.94, to: 1.04 }, yoyo: true, repeat: -1, duration: 650, ease: 'Sine.inOut' });
+    const FRAME_S = 0.96; // warp_frame.png is 275x368: about 350 tall in the game
+    const HOLE_W = 157 * FRAME_S; // its see-through middle (157x243 in the picture)...
+    const HOLE_H = 243 * FRAME_S;
+    const HOLE_Y = (0.518 - 1) * 368 * FRAME_S; // ...whose centre is this far above the frame's bottom
+    this.warpGates = [L - 170, 120].map((x) => {
+      const y = this.level.groundY(x) + 14; // its feet sit in the grass
+      // the swirl spins inside the frame: drawn round and spun, then squashed into the oval
+      const swirl = this.add.image(0, 0, 'warp_swirl').setDisplaySize(HOLE_H * 1.06, HOLE_H * 1.06);
+      const inside = this.add.container(x, y + HOLE_Y, [swirl]).setScale(HOLE_W / HOLE_H, 1).setDepth(17);
+      this.tweens.add({ targets: swirl, angle: x < L / 2 ? 360 : -360, duration: 2600, repeat: -1 });
+      this.tweens.add({ targets: inside, alpha: { from: 0.85, to: 1 }, yoyo: true, repeat: -1, duration: 500, ease: 'Sine.inOut' });
+      const frame = this.add.image(x, y, 'warp_frame').setOrigin(0.5, 1).setScale(FRAME_S).setDepth(18);
       // sparkles drifting up out of it
-      this.add.particles(x, y - 160, 'flare', {
-        x: { min: -45, max: 45 },
-        y: { min: -130, max: 130 },
+      this.add.particles(x, y + HOLE_Y, 'flare', {
+        x: { min: -HOLE_W * 0.4, max: HOLE_W * 0.4 },
+        y: { min: -HOLE_H * 0.4, max: HOLE_H * 0.4 },
         speedY: { min: -60, max: -20 },
         lifespan: 1100,
-        scale: { start: 0.35, end: 0 },
+        scale: { start: 0.3, end: 0 },
         alpha: { start: 0.9, end: 0 },
-        tint: [0xffffff, 0xe0b8ff, 0xb98cff],
+        tint: [0xffffff, 0xe0b8ff, 0xff9cf0],
         blendMode: 'ADD',
-        frequency: 110,
+        frequency: 120,
       }).setDepth(19);
-      return { x, y, glow, ring };
+      const gate = { x, y, cy: y + HOLE_Y, frame, inside, w: 275 * FRAME_S, h: 368 * FRAME_S };
+      // now and then a crackle of lightning round the frame
+      const crackle = () => {
+        this.zap(gate, 1);
+        this.time.delayedCall(Phaser.Math.Between(900, 2200), crackle);
+      };
+      this.time.delayedCall(Phaser.Math.Between(300, 1200), crackle);
+      return gate;
     });
     this.warpCooldown = 0;
+  }
+
+  // n bolts of lightning flicker on the warp gate's edge
+  zap(gate, n) {
+    for (let i = 0; i < n; i++) {
+      const key = Math.random() < 0.5 ? 'warp_bolt1' : 'warp_bolt2';
+      const side = Math.random() < 0.5 ? -1 : 1;
+      const b = this.add.image(
+        gate.x + side * gate.w * Phaser.Math.FloatBetween(0.3, 0.48),
+        gate.cy + Phaser.Math.FloatBetween(-0.35, 0.3) * gate.h,
+        key
+      )
+        .setScale(Phaser.Math.FloatBetween(0.45, 0.75))
+        .setFlipX(side < 0)
+        .setRotation(Phaser.Math.FloatBetween(-0.4, 0.4))
+        .setBlendMode('ADD')
+        .setDepth(19);
+      this.tweens.add({ targets: b, alpha: { from: 1, to: 0.3 }, yoyo: true, repeat: 2, duration: 45 });
+      this.tweens.add({ targets: b, alpha: 0, delay: 280, duration: 160, onComplete: () => b.destroy() });
+    }
   }
 
   // through the right-hand gate and out of the left one
@@ -772,9 +805,10 @@ export class GameScene extends Phaser.Scene {
     const t = this.t;
     const [from, to] = this.warpGates;
     const flash = (g) => {
-      const f = this.add.image(g.x, g.y - 155, 'warp_glow').setDepth(40).setBlendMode('ADD').setScale(0.6);
-      this.tweens.add({ targets: f, scale: 1.6, alpha: 0, duration: 450, ease: 'Quad.out', onComplete: () => f.destroy() });
-      this.tweens.add({ targets: [g.ring, g.glow], scaleX: 1.25, yoyo: true, duration: 140 });
+      const f = this.add.image(g.x, g.cy, 'warp_swirl').setDepth(40).setBlendMode('ADD').setScale(0.6);
+      this.tweens.add({ targets: f, scale: 2, angle: 180, alpha: 0, duration: 500, ease: 'Quad.out', onComplete: () => f.destroy() });
+      this.tweens.add({ targets: g.frame, scaleX: g.frame.scaleX * 1.12, yoyo: true, duration: 140 });
+      this.zap(g, 3);
     };
     flash(from);
     flash(to);

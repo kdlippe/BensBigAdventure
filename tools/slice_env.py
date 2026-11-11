@@ -211,6 +211,32 @@ def cut_white(rgb, hole_min=2500, snow=False):
     return out
 
 
+def glow_cut(rgb):
+    """Glowy art on white -> RGBA by un-mixing the white ("colour to alpha"):
+    soft glows fade out instead of getting a hard edge."""
+    rgb = rgb.astype(np.float32)
+    alpha = np.clip(((255 - rgb.min(axis=2)) / 255.0 - 0.03) / 0.97, 0, 1)
+    safe = np.maximum(alpha, 1e-3)[..., None]
+    col = np.clip((rgb - 255 * (1 - safe)) / safe, 0, 255)
+    return np.dstack([col, alpha * 255]).astype(np.uint8)
+
+
+def soft_cut(rgb, thresh=236, feather=1.5, grow=0, fill=True):
+    """Bright art on white (a swirl with a white-hot middle, lightning): keep the
+    colours as they are, everything that isn't paper is solid, with a soft edge."""
+    ink = rgb.min(axis=2) < thresh
+    if fill:
+        ink = ndimage.binary_fill_holes(ink)
+    lab, n = ndimage.label(ink)
+    if n > 1:
+        sizes = ndimage.sum(ink, lab, range(1, n + 1))
+        ink = np.isin(lab, np.where(sizes > 40)[0] + 1)
+    if grow:
+        ink = ndimage.binary_dilation(ink, iterations=grow)
+    m = ndimage.gaussian_filter(ink.astype(np.float32), feather)
+    return np.dstack([rgb, np.clip(m * 255, 0, 255)]).astype(np.uint8)
+
+
 def keep_largest(rgba):
     """Drop everything except the biggest opaque piece (bits of neighbouring parts)."""
     solid = rgba[..., 3] > 8
@@ -470,6 +496,20 @@ def main():
     for name, (sheet, (x0, y0, x1, y1), largest) in KING_SLAM.items():
         part = cut_white(load(sheet)[y0:y1, x0:x1], hole_min=3000)
         save(trim(keep_largest(part) if largest else part), f"{name}.png")
+
+    # the warp gate in the boss arena (warp_gate.png): the stone frame (its middle
+    # is a painted see-through checkerboard: cleared), a swirl and two bolts
+    sheet = load("warp_gate.png")
+    frame = sheet[10:378, 15:290]
+    f = glow_cut(frame)
+    checker = (frame.min(axis=2) > 150) & (np.ptp(frame, axis=2) < 14)
+    lab, _ = ndimage.label(checker)
+    hole = ndimage.binary_fill_holes(lab == lab[frame.shape[0] // 2, frame.shape[1] // 2])
+    f[ndimage.binary_dilation(hole, iterations=2), 3] = 0
+    save(f, "warp_frame.png")
+    save(trim(soft_cut(sheet[14:276, 802:1011], thresh=232)), "warp_swirl.png")
+    save(trim(soft_cut(sheet[301:553, 287:379], thresh=248, feather=1, grow=1, fill=False)), "warp_bolt1.png")
+    save(trim(soft_cut(sheet[383:538, 194:288], thresh=248, feather=1, grow=1, fill=False)), "warp_bolt2.png")
 
     # the wooden crates the trucks smash (nothing white inside the crate is art).
     # Trimmed tight, with no see-through margin, so stacked crates sit flush
