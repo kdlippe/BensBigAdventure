@@ -11,7 +11,11 @@
 // shock, wreck and explosion pictures, a body offset (dy) and an overlay.
 
 export const WHEEL_R = 62; // wheel radius in game px
-export const HALF_BASE = 98; // half the distance between the wheel hubs
+export const HALF_BASE = 98;
+// the truck is drawn this far lower than where it drives (along its own "down"),
+// so the tires sink a little into the grass, sand or snow and look like they're
+// really resting on it instead of perched on top
+export const SINK = 8; // half the distance between the wheel hubs
 const BODY_LIFT = 105; // how far the body sits above the hubs (monster-truck lift!)
 const LOOKS = {
   normal: {

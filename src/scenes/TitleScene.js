@@ -1,4 +1,4 @@
-import { Truck, WHEEL_R } from '../truck.js';
+import { Truck, WHEEL_R, SINK } from '../truck.js';
 import { sfx } from '../sound.js';
 import { music } from '../music.js';
 import { requestLandscape } from '../device.js';
@@ -47,7 +47,7 @@ export class TitleScene extends Phaser.Scene {
         const on = c.n === picked;
         // shrunk around the hub midpoint, so lower it to keep the tires on the grass
         const scale = on ? 0.9 : 0.8;
-        c.truck.container.setScale(scale).setY(groundY - WHEEL_R * scale);
+        c.truck.container.setScale(scale).setY(groundY + (SINK - WHEEL_R) * scale);
         // the waiting truck is greyed out (a tint, so its parts don't show through each other)
         c.truck.container.list.forEach((o) => o.setTint(on ? o.baseTint : Phaser.Display.Color.ValueToColor(o.baseTint).darken(45).color));
         c.tag.parts.forEach((o) => o.setAlpha(on ? 1 : 0.6));

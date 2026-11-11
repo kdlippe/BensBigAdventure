@@ -1,6 +1,6 @@
 import { buildLevel, BOX, PIT_BOTTOM } from '../level.js';
 import { loadProgress, saveProgress, loadBest, saveBest, loadTruck } from '../progress.js';
-import { Truck, WHEEL_R, HALF_BASE } from '../truck.js';
+import { Truck, WHEEL_R, HALF_BASE, SINK } from '../truck.js';
 import { sfx } from '../sound.js';
 import { music } from '../music.js';
 import { requestLandscape } from '../device.js';
@@ -559,7 +559,7 @@ export class GameScene extends Phaser.Scene {
 
     // ---- draw the truck ----
     const c = this.truck.container;
-    c.setPosition(t.x, t.y).setRotation(t.angle);
+    c.setPosition(t.x - Math.sin(t.angle) * SINK, t.y + Math.cos(t.angle) * SINK).setRotation(t.angle);
     this.truck.pose(t.squash + Math.sin(time / 60) * (throttle ? 0.8 : 0.4), t.tilt);
     this.truck.spin(moved);
 
