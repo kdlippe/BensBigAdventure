@@ -11,8 +11,8 @@
 const CALM_W = 125; // on screen
 const BIG_W = 185;
 const SPEED = 55; // px per second
-const PUFF_NEAR = 450; // puffs up when the truck is this close...
-const CALM_FAR = 650; // ...and calms down once it's this far away
+const PUFF_NEAR = 860; // puffs up when the truck is this close (centre to centre: about a truck length and a bit between bumper and fish)...
+const CALM_FAR = 1060; // ...and calms down once it's this far away
 const PUFFED_FOR = 2.0; // while the truck is near: seconds puffed up...
 const SLEEP_FOR = 8; // ...then it naps this long after it shrinks (a chance to squish it)
 const ZZZ_EVERY = 1.1; // seconds between Z's while it naps
