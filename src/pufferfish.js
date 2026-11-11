@@ -1,8 +1,9 @@
 // The pufferfish enemy (underwater level): swims back and forth just above
 // the seabed. When the truck comes close it stops to glare and keeps puffing
-// up big, round and spiky (for a couple of seconds), then letting it out
-// again; when the truck has gone it calms down. Land on it
-// while it's calm to squish it. Puffed up it's spiky: landing on it, or
+// up big, round and spiky (for a couple of seconds). Each time it lets the air
+// out it's worn out and naps for 8 seconds (Z's float up, it won't puff), then
+// wakes and puffs again if the truck is still close. Land on it
+// while it's calm (or asleep) to squish it. Puffed up it's spiky: landing on it, or
 // touching it at all, blows the truck up, so jump right over it.
 //
 // Same interface as the crab: update(), x, top, bottom, halfWidth, squish(), snap().
@@ -13,7 +14,9 @@ const SPEED = 55; // px per second
 const PUFF_NEAR = 450; // puffs up when the truck is this close...
 const CALM_FAR = 650; // ...and calms down once it's this far away
 const PUFFED_FOR = 2.0; // while the truck is near: seconds puffed up...
-const CALM_FOR = 5; // ...then seconds small after it shrinks (a chance to squish it), and again
+const SLEEP_FOR = 8; // ...then it naps this long after it shrinks (a chance to squish it)
+const ZZZ_EVERY = 1.1; // seconds between Z's while it naps
+const SLEEP_DROP = 18; // it settles this much lower while it naps
 const DIZZY_W = 175;
 
 export class Pufferfish {
@@ -28,7 +31,10 @@ export class Pufferfish {
     this.big = false;
     this.grow = 0; // 0 = calm, 1 = fully puffed (animates between)
     this.near = false; // the truck is close
-    this.breath = 0; // counts down to the next puff in / out while the truck is near
+    this.breath = 0; // counts down to letting the air out while it's puffed up
+    this.sleep = 0; // seconds of nap left (it can't puff up while napping)
+    this.zzzTimer = 0;
+    this.drop = 0; // how far it has settled down for its nap (animates)
     this.phase = Math.random() * 10;
 
     const tex = (key) => scene.textures.get(key).getSourceImage();
@@ -45,7 +51,7 @@ export class Pufferfish {
   }
 
   get centreY() {
-    return this.ground - (72 + 30 * this.grow) + Math.sin(this.phase) * 7;
+    return this.ground - (72 + 30 * this.grow) + this.drop + Math.sin(this.phase) * 7;
   }
 
   // puffed up (or most of the way): spiky, so it can't be squished
@@ -59,27 +65,33 @@ export class Pufferfish {
 
   update(dt, time, groundY) {
     if (this.squished) return;
-    this.phase += dt * 2.2;
+    const asleep = this.sleep > 0;
+    this.phase += dt * (asleep ? 0.9 : 2.2); // slow, sleepy bobbing
     const t = this.scene.t;
     const dist = t ? Math.abs(t.x - this.x) : Infinity;
-    if (!this.near && dist < PUFF_NEAR && !this.scene.finished) {
-      this.near = true;
+    if (dist < PUFF_NEAR && !this.scene.finished) this.near = true;
+    else if (dist > CALM_FAR) this.near = false;
+
+    if (asleep) {
+      // napping: no puffing, Z's float up
+      this.sleep -= dt;
+      this.zzzTimer -= dt;
+      if (this.zzzTimer <= 0 && this.sleep > 0.5) {
+        this.zzzTimer = ZZZ_EVERY;
+        this.zzz();
+      }
+      if (this.sleep <= 0) this.wake();
+    } else if (this.big) {
+      // puffed up: lets the air out after a while, or once the truck has gone, then naps
+      this.breath -= dt;
+      if (this.breath <= 0 || !this.near) this.setBig(false);
+    } else if (this.near) {
       this.breath = PUFFED_FOR;
       this.setBig(true);
-    } else if (this.near && dist > CALM_FAR) {
-      this.near = false;
-      if (this.big) this.setBig(false);
-    } else if (this.near) {
-      // puff in, puff out
-      this.breath -= dt;
-      if (this.breath <= 0) {
-        this.breath = this.big ? CALM_FOR : PUFFED_FOR;
-        this.setBig(!this.big);
-      }
     }
 
     // swims about while the truck is away; hovers in place, glaring at it, while it's near
-    if (!this.near) {
+    if (!this.near && !asleep) {
       this.x += this.dir * SPEED * dt;
       if (this.x < this.minX) {
         this.x = this.minX;
@@ -89,14 +101,39 @@ export class Pufferfish {
         this.dir = -1;
       }
     }
-    const facing = this.near && t ? Math.sign(t.x - this.x) || -1 : this.dir;
-    // the art looks left; flip it to look the other way
-    this.calm.setFlipX(facing > 0);
-    this.puffed.setFlipX(facing > 0);
+    if (!asleep) {
+      // (napping, it keeps facing the way it was)
+      const facing = this.near && t ? Math.sign(t.x - this.x) || -1 : this.dir;
+      // the art looks left; flip it to look the other way
+      this.calm.setFlipX(facing > 0);
+      this.puffed.setFlipX(facing > 0);
+    }
     this.ground = groundY(this.x);
     this.container.setPosition(this.x, this.centreY);
     // a little tail-wag wiggle
-    this.container.setRotation(Math.sin(this.phase * 3) * (this.big ? 0.03 : 0.08));
+    this.container.setRotation(asleep ? Math.sin(this.phase) * 0.05 : Math.sin(this.phase * 3) * (this.big ? 0.03 : 0.08));
+  }
+
+  fallAsleep() {
+    this.sleep = SLEEP_FOR;
+    this.zzzTimer = 0.6;
+    this.scene.tweens.add({ targets: this, drop: SLEEP_DROP, duration: 700, ease: 'Sine.inOut' });
+  }
+
+  wake() {
+    this.sleep = 0;
+    this.scene.tweens.add({ targets: this, drop: 0, duration: 300, ease: 'Back.out' });
+  }
+
+  // a Z floats up from its head
+  zzz() {
+    const scene = this.scene;
+    const side = this.calm.flipX ? 1 : -1; // the way it's facing
+    const z = scene.add.image(this.x + side * 30, this.centreY - 50, 'king_zzz').setScale(0.3).setAlpha(0).setDepth(23);
+    if (side < 0) z.setFlipX(true);
+    scene.tweens.add({ targets: z, alpha: 1, duration: 250 });
+    scene.tweens.add({ targets: z, x: z.x + side * 30, y: z.y - 80, scale: 0.45, duration: 1300, ease: 'Sine.out', onComplete: () => z.destroy() });
+    scene.tweens.add({ targets: z, alpha: 0, duration: 400, delay: 900 });
   }
 
   setBig(big) {
@@ -105,11 +142,13 @@ export class Pufferfish {
     scene.tweens.killTweensOf([this, this.calm, this.puffed]);
     scene.tweens.add({ targets: this, grow: big ? 1 : 0, duration: big ? 260 : 500, ease: big ? 'Back.out' : 'Sine.inOut' });
     if (big) {
+      scene.tweens.add({ targets: this, drop: 0, duration: 260, ease: 'Back.out' }); // rises up out of its nap
       scene.tweens.add({ targets: this.calm, alpha: 0, scale: this.calmS * 1.4, duration: 150 });
       scene.tweens.add({ targets: this.puffed, alpha: 1, scale: this.bigS, duration: 260, ease: 'Back.out' });
     } else {
       scene.tweens.add({ targets: this.puffed, alpha: 0, scale: this.bigS * 0.6, duration: 450 });
       scene.tweens.add({ targets: this.calm, alpha: 1, scale: this.calmS, duration: 450 });
+      this.fallAsleep(); // worn out from all that puffing
     }
   }
 

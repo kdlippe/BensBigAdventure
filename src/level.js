@@ -25,7 +25,7 @@ export const LEVELS = [
   {
     // 5 creatures: they take turns, so that's 3 pufferfish and 2 octopuses
     stars: 50, length: LENGTH, ramps: 6, stacks: 7, rampPits: 1, jumpPits: 2, crabs: 5, theme: 'sea',
-    physics: { gravity: 0.5, jump: 0.8, ramp: 0.75 },
+    physics: { gravity: 0.8, jump: 0.9, ramp: 0.9 }, // just a little floaty: jumps go as high, falls are a bit slower
   },
   // the finale: the King Crab boss in a flat arena - nothing but the boss (and nitro), with its own tune
   {
