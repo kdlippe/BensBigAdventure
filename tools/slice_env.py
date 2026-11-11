@@ -236,7 +236,7 @@ def ground_set(src_prefix, out_suffix, snow=False):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
 
-    # ground sets: meadow (levels 1-2), spooky (3-4), desert (5), snow (6)
+    # ground sets: meadow (level 1), spooky (2), desert (3), snow (4)
     ground = {
         "meadow": ground_set("", ""),
         "spooky": ground_set("spooky_", "_spooky"),
@@ -281,21 +281,21 @@ def main():
         for name, (x0, y0, x1, y1) in boxes.items():
             save(trim(cut_white(src[y0:y1, x0:x1])), f"{name}.png")
 
-    # spooky scenery for levels 3-5. Thin cobwebs and fence bars enclose
+    # spooky scenery for level 2. Thin cobwebs and fence bars enclose
     # little white gaps, so treat even small enclosed white as background.
     for sheet, boxes in (("spooky_decorations.png", SPOOKY_DECOR), ("spooky_props.webp", SPOOKY_PROPS)):
         src = np.array(Image.open(SRC / sheet).convert("RGB"))
         for name, (x0, y0, x1, y1) in boxes.items():
             save(trim(cut_white(src[y0:y1, x0:x1], hole_min=150)), f"{name}.png")
 
-    # desert scenery for level 5 (the tumbleweed is all little gaps)
+    # desert scenery for level 3 (the tumbleweed is all little gaps)
     for sheet, boxes in (("desert_decorations.webp", DESERT_DECOR), ("desert_props.webp", DESERT_PROPS)):
         src = np.array(Image.open(SRC / sheet).convert("RGB"))
         for name, (x0, y0, x1, y1) in boxes.items():
             hole = 30 if name == "tumbleweed" else 150
             save(trim(cut_white(src[y0:y1, x0:x1], hole_min=hole)), f"{name}.png")
 
-    # snow scenery for level 6 (snow is nearly white, so cut in snow mode;
+    # snow scenery for level 4 (snow is nearly white, so cut in snow mode;
     # the gaps in the fence and under the gate are pure white and go)
     for sheet, boxes in (("snow_decorations.png", SNOW_DECOR), ("snow_props.png", SNOW_PROPS)):
         src = load(sheet)
@@ -304,7 +304,7 @@ def main():
             hole = 50000 if name == "snowballs" else 400
             save(trim(cut_white(src[y0:y1, x0:x1], hole_min=hole, snow=True)), f"{name}.png")
 
-    # snow spider enemy (level 6): snowball body, four icy legs, squished
+    # snow spider enemy (level 4): snowball body, four icy legs, squished
     src = load("snow_spider.png")
     for name, (x0, y0, x1, y1, largest) in SNOW_SPIDER.items():
         part = cut_white(src[y0:y1, x0:x1], hole_min=400, snow=True)

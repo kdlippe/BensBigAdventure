@@ -1,7 +1,7 @@
 // Drawing the world: the painted backdrop, the dirt and the bendy grass strip.
 // Shared by the title screen and the levels. Each level has a look ("theme"):
-// the sunny meadow (levels 1-2, title screen), the spooky night (levels 3-4),
-// the desert canyon (level 5) and the snowy mountains (level 6).
+// the sunny meadow (level 1, title screen), the spooky night (level 2),
+// the desert canyon (level 3) and the snowy mountains (level 4).
 
 import { GROUND_ART } from './groundArt.js';
 
