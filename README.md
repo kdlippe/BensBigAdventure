@@ -11,9 +11,9 @@ stars on the way to the finish gate. No game over: a crash or a fall into a pit 
 Open that link in any browser: laptop, tablet or phone, from anywhere. There's nothing to install, and
 it's always the latest version.
 
-| Level 1: the meadow | Level 3: the spooky graveyard | Level 5: the desert canyon |
+| Level 1: the meadow | Level 2: the spooky graveyard | Level 3: the desert canyon |
 |---|---|---|
-| ![Level 1: the monster truck parked on the grass in the sunny meadow, with a tire stack and a wooden ramp ahead](docs/screenshots/level1.jpg) | ![Level 3: the truck parked in the graveyard at night, with a spider dangling ahead among the stars](docs/screenshots/level3.jpg) | ![Level 5: the truck parked in the desert canyon at sunset, with a rattlesnake rearing up ahead beyond a row of stars](docs/screenshots/level5.jpg) |
+| ![Level 1: the monster truck parked on the grass in the sunny meadow, with a crab ahead](docs/screenshots/level1.jpg) | ![Level 2: the truck parked in the graveyard under a full moon, with a spider dangling ahead](docs/screenshots/level2.jpg) | ![Level 3: the truck parked in the desert canyon at sunset, among dinosaur skulls, with a rattlesnake ahead](docs/screenshots/level3.jpg) |
 
 ## Playing on a tablet
 
@@ -36,22 +36,21 @@ it's always the latest version.
 
 ## How it plays
 
-- **6 levels**, each longer than the last, with 20, 30, 40, 50, 60 and 70 stars. The level you're on shows
+- **4 levels**, one for each look, each with 50 stars and the same length. The level you're on shows
   under the progress bar. Finishing a level unlocks the next (**NEXT LEVEL**); the title screen offers
   **NEW GAME** or carries on from the level you reached, and the 🏠 button goes back to the title.
 - **Music**: an original 16-bit (SNES-style) tune for each look - bouncy for the meadow, music-box
   spooky for the graveyard, a cowboy trot for the desert, a jingly sleigh ride for the snow - made
-  in code (`src/music.js`). It always
-  plays during a level; the title screen is quiet, and the music starts again with the next level.
-- **Four looks**: levels 1–2 are a sunny meadow; levels 3–4 are a spooky graveyard at night (moon,
-  tombstones, pumpkins, a pumpkin arch at the finish); level 5 is a desert canyon at sunset (cactuses,
-  a T-rex skull, fossils in the dirt, a canyon arch at the finish); level 6 is snowy mountains with snow
+  in code (`src/music.js`). It always plays during a level; the title screen is quiet, and the music starts again with the next level.
+- **Four looks**: level 1 is a sunny meadow; level 2 is a spooky graveyard at night (moon,
+  tombstones, pumpkins, a pumpkin arch at the finish); level 3 is a desert canyon at sunset (cactuses,
+  a T-rex skull, fossils in the dirt, a canyon arch at the finish); level 4 is snowy mountains with snow
   falling (snowy pines, a frozen log, ice crystals, snowball piles, an icy arch at the finish). Set per
   level with `theme` in `src/level.js`.
-- **Pits** (as wide as the truck): level 3 has 1 and level 4 has 2, each with a ramp right before it to
-  fly over; level 5 has 3 with no ramps, so you jump yourself (a little arc of stars shows where);
-  level 6 has 3, each with a ramp.
-  Fall in and you start the level again.
+- **Ramps** on every level launch you into the air.
+- **Pits** (as wide as the truck): level 1 has none. Level 2 has 2, each with a ramp right before it
+  that flies you over. Levels 3 and 4 have 3: 1 with a ramp, and 2 with no ramp, so you jump those
+  yourself (a little arc of stars shows where). Fall in and you start the level again.
 - **Nitro**: you start with 1 charge and can carry up to 3 (the number on the ⚡ button). Each boost drives you
   forward at nearly double speed for 3 seconds. There are always 3 red nitro canisters on the track (one in each third), each giving a charge;
   some float high, so you have to jump for them.
@@ -59,10 +58,10 @@ it's always the latest version.
   (keep holding it to reverse).
 - **Crabs** (up to 3 per level) scuttle back and forth. Jump and land on one to squish it (and bounce
   high); drive into one and KA-BOOM, the truck blows apart (see below).
-- **Spiders** replace the crabs on the spooky levels (3–4): they dangle on a thread, dropping down and
+- **Spiders** replace the crabs on the spooky level (2): they dangle on a thread, dropping down and
   climbing back up. Drive under one while it's high, jump over it when it's low, or land on it to squish it.
-- **Rattlesnakes** replace the crabs on the desert level (5): they slither back and forth, rattling.
-- **Snow spiders** replace the crabs on the snow level (6): grumpy snowballs on four icy legs that
+- **Rattlesnakes** replace the crabs on the desert level (3): they slither back and forth, rattling.
+- **Snow spiders** replace the crabs on the snow level (4): grumpy snowballs on four icy legs that
   scuttle back and forth.
 - Any enemy you touch while in the air and above its middle gets squished, so a jump in time always
   works.
@@ -102,7 +101,7 @@ src/main.js             game setup
 src/scenes/BootScene.js loads the truck art, draws stars/boxes/buttons
 src/scenes/TitleScene.js title screen: GO! / NEW GAME / keep going
 src/scenes/GameScene.js the level: driving, jumping, boxes, stars, finish
-src/level.js            the 6 levels: ramps, box stacks, pits, stars, canisters, crabs, scenery
+src/level.js            the 4 levels: ramps, box stacks, pits, stars, canisters, crabs, scenery
 src/progress.js         level reached and best time per level (saved in the browser)
 src/scenery.js          backdrop, tiled dirt and the bendy grass strip, per theme (meadow / spooky / desert)
 src/groundArt.js        grass strip sizes per theme (generated from the art)
@@ -128,7 +127,7 @@ docs/screenshots/       screenshots used in this README
 ## Tweaking
 
 - **Levels**: the `LEVELS` table at the top of `src/level.js` sets each level's stars (exact count),
-  length, number of ramps, box stacks, pits (and whether they have ramps) and crabs. Each level's
+  length, number of ramps, box stacks, pits with a ramp (`rampPits`), pits to jump (`jumpPits`) and crabs. Each level's
   layout is random but the same every time you play it; stars, canisters and crabs move every play.
 - **How the truck feels**: the constants at the top of `src/scenes/GameScene.js`
   (`MAX_SPEED`, `JUMP_SPEED`, `GRAVITY`, `RAMP_BOOST`, suspension `SPRING`/`DAMPING`, and the `NITRO_*` settings).

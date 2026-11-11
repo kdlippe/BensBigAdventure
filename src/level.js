@@ -1,4 +1,4 @@
-// The 6 levels. Everything is measured in game pixels; the screen is 1280x720.
+// The 4 levels, one per look. Everything is measured in game pixels; the screen is 1280x720.
 //
 // Each level's layout (where the ramps, box stacks and pits go, and the
 // scenery) is random but the same every time you play that level (seeded by
@@ -8,18 +8,18 @@
 
 import { RAMP_ART } from './rampProfile.js';
 
-const L1 = 13000; // level 1 is about 2/3 the length of the old single level
-const GROW = 1.25; // each level after is 25% longer
+const LENGTH = 31700; // every level is this long (about 1 minute 20 of driving)
 
 export const LEVELS = [
-  // stars: exactly this many. pits: holes you must jump; pitRamps: a ramp right before each pit.
+  // stars: exactly this many. ramps: jumps on their own.
+  // rampPits: pits with a ramp right before them (the ramp flies you over).
+  // jumpPits: pits with no ramp, so you jump them yourself.
+  // crabs: enemies (crabs, spiders, rattlesnakes or snow spiders, by look), at most this many.
   // theme: 'meadow' (sunny), 'spooky' (night graveyard), 'desert' (canyon) or 'snow' (mountains) look.
-  { stars: 20, length: L1, ramps: 3, stacks: 3, pits: 0, pitRamps: false, crabs: 1, theme: 'meadow' },
-  { stars: 30, length: L1 * GROW, ramps: 4, stacks: 4, pits: 0, pitRamps: false, crabs: 2, theme: 'meadow' },
-  { stars: 40, length: L1 * GROW ** 2, ramps: 4, stacks: 5, pits: 1, pitRamps: true, crabs: 2, theme: 'spooky' },
-  { stars: 50, length: L1 * GROW ** 3, ramps: 5, stacks: 6, pits: 2, pitRamps: true, crabs: 3, theme: 'spooky' },
-  { stars: 60, length: L1 * GROW ** 4, ramps: 6, stacks: 7, pits: 3, pitRamps: false, crabs: 3, theme: 'desert' },
-  { stars: 70, length: L1 * GROW ** 5, ramps: 7, stacks: 8, pits: 3, pitRamps: true, crabs: 3, theme: 'snow' },
+  { stars: 50, length: LENGTH, ramps: 6, stacks: 7, rampPits: 0, jumpPits: 0, crabs: 2, theme: 'meadow' },
+  { stars: 50, length: LENGTH, ramps: 6, stacks: 7, rampPits: 2, jumpPits: 0, crabs: 3, theme: 'spooky' },
+  { stars: 50, length: LENGTH, ramps: 6, stacks: 7, rampPits: 1, jumpPits: 2, crabs: 3, theme: 'desert' },
+  { stars: 50, length: LENGTH, ramps: 6, stacks: 7, rampPits: 1, jumpPits: 2, crabs: 3, theme: 'snow' },
 ];
 
 export const BOX = 80;
@@ -75,15 +75,17 @@ function layout(def, length, finishX, rand) {
   const kinds = [
     ...Array(def.ramps).fill('ramp'),
     ...Array(def.stacks).fill('stack'),
-    ...Array(def.pits).fill('pit'),
+    ...Array(def.rampPits).fill('rampPit'),
+    ...Array(def.jumpPits).fill('jumpPit'),
   ];
+  const isPit = (k) => k === 'rampPit' || k === 'jumpPit';
   // shuffle, but never start with a pit and never put two pits side by side
   for (let tries = 0; tries < 200; tries++) {
     for (let i = kinds.length - 1; i > 0; i--) {
       const j = Math.floor(rand() * (i + 1));
       [kinds[i], kinds[j]] = [kinds[j], kinds[i]];
     }
-    const ok = kinds[0] !== 'pit' && kinds.every((k, i) => !(k === 'pit' && kinds[i + 1] === 'pit'));
+    const ok = !isPit(kinds[0]) && kinds.every((k, i) => !(isPit(k) && isPit(kinds[i + 1])));
     if (ok) break;
   }
 
@@ -102,7 +104,7 @@ function layout(def, length, finishX, rand) {
       stacks.push({ x: mid - 160, rows: STACK_SHAPES[Math.floor(rand() * STACK_SHAPES.length)] });
     } else {
       const pit = { x0: mid - PIT_WIDTH / 2, x1: mid + PIT_WIDTH / 2, ramp: null };
-      if (def.pitRamps) {
+      if (kind === 'rampPit') {
         // a ramp right before the pit sends you flying over it
         const h = 200;
         const backW = RAMP_ART.backX * (h / RAMP_ART.lipHeight);
