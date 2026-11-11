@@ -14,7 +14,7 @@ export const LEVELS = [
   // stars: exactly this many. ramps: jumps on their own.
   // rampPits: pits with a ramp right before them (the ramp flies you over).
   // jumpPits: pits with no ramp, so you jump them yourself.
-  // crabs: enemies (crabs, spiders, rattlesnakes or snow spiders, by look), at most this many.
+  // crabs: enemies (crabs, spiders, rattlesnakes or snowmen, by look), at most this many.
   // theme: 'meadow' (sunny), 'spooky' (night graveyard), 'desert' (canyon) or 'snow' (mountains) look.
   { stars: 50, length: LENGTH, ramps: 6, stacks: 7, rampPits: 0, jumpPits: 0, crabs: 2, theme: 'meadow' },
   { stars: 50, length: LENGTH, ramps: 6, stacks: 7, rampPits: 2, jumpPits: 0, crabs: 3, theme: 'spooky' },

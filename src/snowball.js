@@ -1,14 +1,14 @@
-// A snowball thrown by a snow spider (snow level). It's tossed from the
-// spider's body, drops to the ground and rolls low and fast towards the truck
-// with a frosty streak behind it, so a jump takes the truck right over it.
+// A snowball thrown by an evil snowman (snow level). It's tossed from the
+// snowman's hand, drops to the ground and rolls low and fast towards the truck,
+// kicking up a trail of snow dust that fades away, so a jump takes the truck
+// right over it.
 // If it hits the truck it bursts (GameScene decides what a hit does).
 
 const R = 30; // radius on screen
 const SPEED = 380; // px per second along the ground
 const GRAVITY = 1500;
 const RANGE = 1700; // how far it rolls before it melts away
-const TRAIL_W = 230; // the streak's length on screen
-const WISPS = ['snow_wisp1', 'snow_wisp2', 'snow_wisp3'];
+const DUST_EVERY = 0.035; // seconds between puffs of snow dust
 
 export class Snowball {
   constructor(scene, x, y, dir) {
@@ -17,20 +17,13 @@ export class Snowball {
     this.y = y;
     this.dir = dir; // -1 = rolling left, 1 = rolling right
     this.vx = dir * SPEED;
-    this.vy = -260; // a little toss up out of the spider's legs
+    this.vy = -260; // a little toss up out of the snowman's hand
     this.travelled = 0;
-    this.wispTimer = 0;
+    this.dustTimer = 0;
     this.dead = false;
     this.r = R;
 
     const tex = (key) => scene.textures.get(key).getSourceImage();
-    // the streak's pointed end sits on the ball; the swirls stream out behind
-    this.trail = scene.add.image(x, y, 'snowball_trail')
-      .setScale(TRAIL_W / tex('snowball_trail').width)
-      .setOrigin(dir < 0 ? 0.05 : 0.95, 0.68)
-      .setFlipX(dir > 0)
-      .setAlpha(0.9)
-      .setDepth(23);
     this.ball = scene.add.image(x, y, 'snowball').setScale((R * 2) / tex('snowball').width).setDepth(24);
     // pops into view
     const s = this.ball.scale;
@@ -58,26 +51,34 @@ export class Snowball {
       this.vy = this.vy > 200 ? -this.vy * 0.3 : 0; // a small bounce, then it rolls
     }
     this.ball.setPosition(this.x, this.y).setRotation(this.ball.rotation + (this.vx / R) * dt);
-    this.trail.setPosition(this.x - this.dir * R * 0.2, this.y + 6);
-    this.trail.setScale(this.trail.scaleX, this.trail.scaleX * (1 + Math.sin(this.travelled / 40) * 0.06));
 
-    // little puffs of snow left behind
-    this.wispTimer -= dt;
-    if (this.wispTimer <= 0) {
-      this.wispTimer = 0.12;
-      const w = this.scene.add.image(this.x - this.dir * 60, this.y + Phaser.Math.Between(-10, 14), Phaser.Utils.Array.GetRandom(WISPS))
-        .setScale(0.22)
-        .setFlipX(this.dir > 0)
-        .setAlpha(0.8)
-        .setDepth(22);
-      this.scene.tweens.add({
-        targets: w,
-        x: w.x - this.dir * 50,
-        y: w.y - 20,
+    // snow dust kicked up behind it while it rolls: soft puffs that drift up,
+    // spread out and fade away
+    const rolling = this.vy === 0;
+    this.dustTimer -= dt;
+    if (this.dustTimer <= 0) {
+      this.dustTimer = DUST_EVERY;
+      const scene = this.scene;
+      const big = Math.random() < 0.35;
+      const puff = scene.add.image(
+        this.x - this.dir * Phaser.Math.Between(10, 28),
+        this.y + R * (rolling ? 0.75 : 0.2) + Phaser.Math.Between(-6, 4),
+        big ? 'puff' : 'snowflake'
+      )
+        // pale blue-grey, so the dust shows up against the white snow
+        .setTint(Math.random() < 0.5 ? 0xc9dae8 : 0xb3c8dc)
+        .setScale(big ? 0.16 : Phaser.Math.FloatBetween(2, 3.4))
+        .setAlpha(0.9)
+        .setDepth(23);
+      scene.tweens.add({
+        targets: puff,
+        x: puff.x - this.dir * Phaser.Math.Between(20, 60),
+        y: puff.y - Phaser.Math.Between(18, 46),
+        scale: puff.scale * (big ? 2.4 : 2.2),
         alpha: 0,
-        scale: 0.3,
-        duration: 500,
-        onComplete: () => w.destroy(),
+        duration: Phaser.Math.Between(600, 900),
+        ease: 'Quad.out',
+        onComplete: () => puff.destroy(),
       });
     }
 
@@ -88,7 +89,7 @@ export class Snowball {
   melt() {
     this.dead = true;
     this.scene.tweens.add({
-      targets: [this.ball, this.trail],
+      targets: this.ball,
       alpha: 0,
       duration: 300,
       onComplete: () => this.destroyParts(),
@@ -122,6 +123,5 @@ export class Snowball {
 
   destroyParts() {
     this.ball.destroy();
-    this.trail.destroy();
   }
 }
