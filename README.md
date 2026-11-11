@@ -36,17 +36,21 @@ it's always the latest version.
 
 ## How it plays
 
-- **5 levels**, each longer than the last, with 20, 30, 40, 50 and 60 stars. The level you're on shows
+- **6 levels**, each longer than the last, with 20, 30, 40, 50, 60 and 70 stars. The level you're on shows
   under the progress bar. Finishing a level unlocks the next (**NEXT LEVEL**); the title screen offers
   **NEW GAME** or carries on from the level you reached, and the 🏠 button goes back to the title.
 - **Music**: an original 16-bit (SNES-style) tune for each look - bouncy for the meadow, music-box
-  spooky for the graveyard, a cowboy trot for the desert - made in code (`src/music.js`). It always
+  spooky for the graveyard, a cowboy trot for the desert, a jingly sleigh ride for the snow - made
+  in code (`src/music.js`). It always
   plays during a level; the title screen is quiet, and the music starts again with the next level.
-- **Three looks**: levels 1–2 are a sunny meadow; levels 3–4 are a spooky graveyard at night (moon,
+- **Four looks**: levels 1–2 are a sunny meadow; levels 3–4 are a spooky graveyard at night (moon,
   tombstones, pumpkins, a pumpkin arch at the finish); level 5 is a desert canyon at sunset (cactuses,
-  a T-rex skull, fossils in the dirt, a canyon arch at the finish). Set per level with `theme` in `src/level.js`.
+  a T-rex skull, fossils in the dirt, a canyon arch at the finish); level 6 is snowy mountains with snow
+  falling (snowy pines, a frozen log, ice crystals, snowball piles, an icy arch at the finish). Set per
+  level with `theme` in `src/level.js`.
 - **Pits** (as wide as the truck): level 3 has 1 and level 4 has 2, each with a ramp right before it to
-  fly over; level 5 has 3 with no ramps, so you jump yourself (a little arc of stars shows where).
+  fly over; level 5 has 3 with no ramps, so you jump yourself (a little arc of stars shows where);
+  level 6 has 3, each with a ramp.
   Fall in and you start the level again.
 - **Nitro**: you start with 1 charge and can carry up to 3 (the number on the ⚡ button). Each boost drives you
   forward at nearly double speed for 3 seconds. There are always 3 red nitro canisters on the track (one in each third), each giving a charge;
@@ -58,6 +62,8 @@ it's always the latest version.
 - **Spiders** replace the crabs on the spooky levels (3–4): they dangle on a thread, dropping down and
   climbing back up. Drive under one while it's high, jump over it when it's low, or land on it to squish it.
 - **Rattlesnakes** replace the crabs on the desert level (5): they slither back and forth, rattling.
+- **Snow spiders** replace the crabs on the snow level (6): grumpy snowballs on four icy legs that
+  scuttle back and forth.
 - Any enemy you touch while in the air and above its middle gets squished, so a jump in time always
   works.
 - **Crashing**: touching an enemy without squishing it blows the truck up. There's a big explosion,
@@ -96,7 +102,7 @@ src/main.js             game setup
 src/scenes/BootScene.js loads the truck art, draws stars/boxes/buttons
 src/scenes/TitleScene.js title screen: GO! / NEW GAME / keep going
 src/scenes/GameScene.js the level: driving, jumping, boxes, stars, finish
-src/level.js            the 5 levels: ramps, box stacks, pits, stars, canisters, crabs, scenery
+src/level.js            the 6 levels: ramps, box stacks, pits, stars, canisters, crabs, scenery
 src/progress.js         level reached and best time per level (saved in the browser)
 src/scenery.js          backdrop, tiled dirt and the bendy grass strip, per theme (meadow / spooky / desert)
 src/groundArt.js        grass strip sizes per theme (generated from the art)
@@ -106,13 +112,14 @@ src/truck.js            the truck drawing (body, wheels, struts)
 src/crab.js             the crab enemy: walking animation and squish
 src/spider.js           the spider enemy (spooky levels): dangles on a thread, squish
 src/snake.js            the rattlesnake enemy (desert level): slithers and rattles, squish
+src/snowspider.js       the snow spider enemy (snow level): scuttles on icy legs, squish
 src/sound.js            sound effects, generated in code (no audio files)
 src/music.js            background music: 16-bit-style instruments, echo, and one song per look
 assets/sprites/         the truck parts as transparent PNGs
 assets/env/             ground, ramp, scenery and backdrop art
 art/source/             the original art the game files were cut from
 tools/slice_sprites.py  cuts the truck parts out of the truck art sheet
-tools/slice_env.py      cuts/cleans the ground, ramp, scenery (all themes), flame, crab, spider, snake and button art
+tools/slice_env.py      cuts/cleans the ground, ramp, scenery (all themes), flame, enemy, wreck and button art
 tools/serve.py          local web server with browser caching turned off
 tools/build_site.py     builds the published site with version-stamped files
 docs/screenshots/       screenshots used in this README

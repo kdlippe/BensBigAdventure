@@ -1,9 +1,9 @@
 // Background music in a 16-bit (SNES-era) style, made with the Web Audio API:
 // a square-wave lead with a little vibrato, a round triangle bass, a soft
-// string pad, punchy drums, and the trademark echo. Three original songs, one
+// string pad, punchy drums, and the trademark echo. Four original songs, one
 // per level look. Nothing is loaded from files.
 //
-// music.play('meadow' | 'spooky' | 'desert'), music.stop(), music.duck()
+// music.play('meadow' | 'spooky' | 'desert' | 'snow'), music.stop(), music.duck()
 // It shares the sound effects' AudioContext, so call it after sfx.unlock().
 
 import { sfx } from './sound.js';
@@ -64,6 +64,22 @@ const SONGS = {
       C5:2 F5:2 A5:2 G5:2 F5:4 E5:2 D5:2
       E5:4 G#5:4 B5:4 E5:4`,
   },
+  // snowy sleigh ride, G major: twinkly music-box tune, oom-pah bass, jingles
+  snow: {
+    bpm: 132,
+    lead: 'bell',
+    style: 'sleigh',
+    chords: ['G', 'C', 'D', 'G', 'Em', 'C', 'D', 'G'],
+    melody: `
+      B4:2 D5:2 G5:4 F#5:2 G5:2 A5:4
+      G5:2 E5:2 C5:4 E5:4 -:4
+      F#5:2 A5:2 D6:4 C6:2 B5:2 A5:4
+      B5:6 A5:2 G5:8
+      E5:2 G5:2 B5:4 A5:2 G5:2 E5:4
+      C5:2 E5:2 G5:4 A5:4 G5:4
+      A5:2 B5:2 C6:2 B5:2 A5:4 F#5:4
+      G5:8 D5:4 B4:4`,
+  },
 };
 
 // ---------------------------------------------------------------- notes
@@ -111,6 +127,9 @@ function compile(song) {
       for (let i = 0; i < 16; i += 2) at[b + i].push({ v: 'bass', midi: root - 12 + (i % 4 === 2 ? 12 : 0), len: 2 });
     } else if (song.style === 'tick') {
       for (const [i, len] of [[0, 4], [6, 2], [8, 4], [14, 2]]) at[b + i].push({ v: 'bass', midi: root - 12, len });
+    } else if (song.style === 'sleigh') {
+      // oom-pah: root, fifth, root, fifth
+      for (let beat = 0; beat < 4; beat++) at[b + beat * 4].push({ v: 'bass', midi: root - 12 + (beat % 2 ? 7 : 0), len: 3 });
     } else {
       // gallop: da-da-dum, da-da-dum
       for (let beat = 0; beat < 4; beat++) {
@@ -131,6 +150,12 @@ function compile(song) {
         if (i === 0 || i === 8) at[s].push({ v: 'kick' });
         if (i === 12 && bar % 2 === 1) at[s].push({ v: 'snare' });
         if (i % 4 === 0) at[s].push({ v: 'tick' });
+      } else if (song.style === 'sleigh') {
+        // sleigh bells: a jingle on every 8th, with a soft backbeat
+        if (i === 0 || i === 8) at[s].push({ v: 'kick' });
+        if (i === 4 || i === 12) at[s].push({ v: 'snare' });
+        if (i % 2 === 0) at[s].push({ v: 'hat' });
+        if (i % 4 === 2) at[s].push({ v: 'tick' });
       } else {
         if (i === 0 || i === 8) at[s].push({ v: 'kick' });
         if (i % 4 === 2) at[s].push({ v: 'clop', high: i % 8 === 2 });

@@ -1,4 +1,4 @@
-// The 5 levels. Everything is measured in game pixels; the screen is 1280x720.
+// The 6 levels. Everything is measured in game pixels; the screen is 1280x720.
 //
 // Each level's layout (where the ramps, box stacks and pits go, and the
 // scenery) is random but the same every time you play that level (seeded by
@@ -13,12 +13,13 @@ const GROW = 1.25; // each level after is 25% longer
 
 export const LEVELS = [
   // stars: exactly this many. pits: holes you must jump; pitRamps: a ramp right before each pit.
-  // theme: 'meadow' (sunny), 'spooky' (night graveyard) or 'desert' (canyon) look.
+  // theme: 'meadow' (sunny), 'spooky' (night graveyard), 'desert' (canyon) or 'snow' (mountains) look.
   { stars: 20, length: L1, ramps: 3, stacks: 3, pits: 0, pitRamps: false, crabs: 1, theme: 'meadow' },
   { stars: 30, length: L1 * GROW, ramps: 4, stacks: 4, pits: 0, pitRamps: false, crabs: 2, theme: 'meadow' },
   { stars: 40, length: L1 * GROW ** 2, ramps: 4, stacks: 5, pits: 1, pitRamps: true, crabs: 2, theme: 'spooky' },
   { stars: 50, length: L1 * GROW ** 3, ramps: 5, stacks: 6, pits: 2, pitRamps: true, crabs: 3, theme: 'spooky' },
   { stars: 60, length: L1 * GROW ** 4, ramps: 6, stacks: 7, pits: 3, pitRamps: false, crabs: 3, theme: 'desert' },
+  { stars: 70, length: L1 * GROW ** 5, ramps: 7, stacks: 8, pits: 3, pitRamps: true, crabs: 3, theme: 'snow' },
 ];
 
 export const BOX = 80;
