@@ -85,7 +85,7 @@ export class GameScene extends Phaser.Scene {
     this.boxes = this.level.boxes.map((b) => ({
       ...b,
       alive: true,
-      img: this.add.image(b.x, b.y, 'box').setDepth(20),
+      img: this.add.image(b.x, b.y, 'crate').setDisplaySize(BOX, BOX).setDepth(20), // a wooden crate
     }));
 
     this.stars = this.level.stars.map((s, i) => {
@@ -602,7 +602,7 @@ export class GameScene extends Phaser.Scene {
           life: 2.2,
           fade: true,
         });
-        for (let i = 0; i < 3; i++) this.pebble(b.x, b.y, 0xd9a15a);
+        for (let i = 0; i < 3; i++) this.pebble(b.x, b.y, 0x9c6b3c); // wood chips
       }
     }
     if (smashed) {

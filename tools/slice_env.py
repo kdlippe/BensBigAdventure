@@ -471,6 +471,9 @@ def main():
         part = cut_white(load(sheet)[y0:y1, x0:x1], hole_min=3000)
         save(trim(keep_largest(part) if largest else part), f"{name}.png")
 
+    # the wooden crates the trucks smash (nothing white inside the crate is art)
+    save(trim(keep_largest(cut_white(load("crate.png"), hole_min=10**9))), "crate.png")
+
     # the second truck (the ghost truck). Its wheels: Ben's side-on wheel repainted like
     # the reference picture (truck2_reference.png) - lime-green rims with purple
     # hubs near, purple rims on the far side
