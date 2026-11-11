@@ -24,6 +24,10 @@ const ENV_PNG = [
   'grass_strip_snow', 'snow_log', 'ice_crystals', 'snowballs', 'icy_bramble', 'ice_rock',
   'snow_fence', 'snow_gate', 'snow_tires', 'snow_tree',
   'snowman_body', 'snowman_arm', 'snowman_dizzy',
+  // underwater level
+  'grass_strip_sea', 'shipwreck', 'coral_arch', 'coral_clump', 'sea_grass', 'seashells', 'anchor', 'treasure_chest',
+  'puffer', 'puffer_big', 'puffer_dizzy', 'octopus', 'octopus_dizzy', 'ink_cloud', 'ink_splat',
+  'truck_body_snorkel', 'wreck_body_snorkel', 'bubble_jet',
   'fence', 'tree', 'tires', 'finish_gate',
 ];
 const OUTLINE = 0x16161a;
@@ -62,7 +66,7 @@ export class BootScene extends Phaser.Scene {
     const url = (path) => (v ? `${path}?v=${v}` : path);
     for (const key of SPRITES) this.load.image(key, url(`assets/sprites/${key}.png`));
     for (const key of ENV_PNG) this.load.image(key, url(`assets/env/${key}.png`));
-    for (const theme of ['', '_spooky', '_desert', '_snow']) {
+    for (const theme of ['', '_spooky', '_desert', '_snow', '_sea']) {
       this.load.image(`dirt${theme}`, url(`assets/env/dirt${theme}.jpg`));
       this.load.image(`background${theme}`, url(`assets/env/background${theme}.jpg`));
     }
@@ -208,6 +212,13 @@ export class BootScene extends Phaser.Scene {
 
     // speed line for the nitro rush
     this.tex('speedline', 160, 8, (g) => g.fillStyle(0xffffff).fillRoundedRect(0, 0, 160, 8, 4));
+
+    // a bubble: thin bright ring, faint fill and a shine (the underwater level)
+    this.tex('bubble', 40, 40, (g) => {
+      g.fillStyle(0xd8f4ff, 0.25).fillCircle(20, 20, 17);
+      g.lineStyle(3, 0xe9fbff, 0.95).strokeCircle(20, 20, 17);
+      g.fillStyle(0xffffff, 0.95).fillCircle(13, 13, 4);
+    });
 
     // a soft snowflake (falling snow on the snow level)
     this.tex('snowflake', 16, 16, (g) => {

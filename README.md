@@ -16,6 +16,8 @@ it's always the latest version.
 | ![Level 1: the monster truck parked on the grass in the sunny meadow, with a crab ahead](docs/screenshots/level1.jpg) | ![Level 2: the truck parked in the graveyard under a full moon, with a spider dangling ahead](docs/screenshots/level2.jpg) |
 | **Level 3: the desert canyon** | **Level 4: the snowy mountains** |
 | ![Level 3: the truck parked in the desert canyon at sunset, among dinosaur skulls, with a rattlesnake ahead](docs/screenshots/level3.jpg) | ![Level 4: the truck parked in the snowy mountains with snow falling and an evil snowman ahead by a pine tree](docs/screenshots/level4.jpg) |
+| **Level 5: under the sea** | |
+| ![Level 5: the truck in goggles and a snorkel on the seabed, by a sunken ship, with an octopus squirting a cloud of ink at it](docs/screenshots/level5.jpg) | |
 
 ## Playing on a tablet
 
@@ -38,27 +40,32 @@ it's always the latest version.
 
 ## How it plays
 
-- **4 levels**, one for each look, each with 50 stars and the same length. The level you're on shows
+- **5 levels**, one for each look, each with 50 stars and the same length. The level you're on shows
   under the progress bar. Finishing a level unlocks the next (**NEXT LEVEL**); the title screen offers
   **NEW GAME** or carries on from the level you reached, and the 🏠 button goes back to the title.
 - **Music**: an original 16-bit (SNES-style) tune for each look - bouncy for the meadow, music-box
-  spooky for the graveyard, a cowboy trot for the desert, a jingly sleigh ride for the snow - made
-  in code (`src/music.js`). It always plays during a level; the title screen is quiet, and the music starts again with the next level.
-- **Four looks**: level 1 is a sunny meadow; level 2 is a spooky graveyard at night (moon,
+  spooky for the graveyard, a cowboy trot for the desert, a jingly sleigh ride for the snow, a
+  dreamy wobbly drift under the sea - made in code (`src/music.js`). It always plays during a level; the title screen is quiet, and the music starts again with the next level.
+- **Five looks**: level 1 is a sunny meadow; level 2 is a spooky graveyard at night (moon,
   tombstones, pumpkins, a pumpkin arch at the finish); level 3 is a desert canyon at sunset (cactuses,
   a T-rex skull, fossils in the dirt, a canyon arch at the finish); level 4 is snowy mountains with snow
-  falling (snowy pines, a frozen log, ice crystals, snowball piles, an icy arch at the finish). Set per
-  level with `theme` in `src/level.js`.
+  falling (snowy pines, a frozen log, ice crystals, snowball piles, an icy arch at the finish); level 5
+  is under the sea (kelp, coral, seashells, anchors, treasure chests, sunken ships, bubbles rising, and
+  a coral arch with a treasure chest at the finish). Set per level with `theme` in `src/level.js`.
+- **Under the sea** (level 5) the truck wears goggles and a snorkel, and it's floaty: half the
+  gravity, so jumps go higher and drift down slowly, and ramps send it on long, slow flights. The
+  exhaust blows bubbles, and the nitro sprays a gush of water and bubbles instead of flames.
+  (`physics` in `src/level.js`.)
 - **Ramps** on every level launch you into the air.
 - **Pits** (as wide as the truck): level 1 has none. Level 2 has 2, each with a ramp right before it
-  that flies you over. Levels 3 and 4 have 3: 1 with a ramp, and 2 with no ramp, so you jump those
+  that flies you over. Levels 3, 4 and 5 have 3: 1 with a ramp, and 2 with no ramp, so you jump those
   yourself (a little arc of stars shows where). Fall in and you start the level again.
 - **Nitro**: you start with 1 charge and can carry up to 3 (the number on the ⚡ button). Each boost drives you
   forward at nearly double speed for 3 seconds. There are always 3 red nitro canisters on the track (one in each third), each giving a charge;
   some float high, so you have to jump for them.
 - **Braking**: pressing back while boosting ends the boost and skids the truck smoothly to a stop
   (keep holding it to reverse).
-- **Crabs** (up to 3 per level) scuttle back and forth. Jump and land on one to squish it (and bounce
+- **Crabs** (up to 3 per level; 5 creatures on the sea level) scuttle back and forth. Jump and land on one to squish it (and bounce
   high); drive into one and KA-BOOM, the truck blows apart (see below).
 - **Spiders** replace the crabs on the spooky level (2): they dangle on a thread, dropping down and
   climbing back up. Drive under one while it's high, jump over it when it's low, or land on it to squish it.
@@ -67,6 +74,10 @@ it's always the latest version.
   hats, and when the truck comes near they wind up and throw snowballs at it. The snowballs roll
   low along the ground, kicking up a trail of snow dust that fades away: jump while driving at one
   and it rolls underneath. One that hits bursts into a puff of snow and knocks the truck back (and ends a boost).
+- **Pufferfish and octopuses** take turns on the sea level (5): 3 pufferfish and 2 octopuses. Pufferfish swim back and forth and
+  keep puffing up big and spiky (then letting it out) while the truck is close: land on one while
+  it's small to squish it, but a spiky one blows the truck up even if you land on it, so jump right over it. Octopuses creep about and squirt clouds of ink
+  that roll along the seabed at the truck, like the snowballs: jump over them.
 - Any enemy you touch while in the air and above its middle gets squished, so a jump in time always
   works.
 - **Crashing**: touching an enemy without squishing it blows the truck up. There's a big explosion,
@@ -111,12 +122,14 @@ src/scenery.js          backdrop, tiled dirt and the bendy grass strip, per them
 src/groundArt.js        grass strip sizes per theme (generated from the art)
 src/rampProfile.js      the wooden ramp's curve (generated from the art)
 src/flameArt.js         where the nitro flame leaves the pipe (generated from the art)
-src/truck.js            the truck drawing (body, wheels, struts)
+src/truck.js            the truck drawing (body, wheels, V shocks), normal or with a snorkel
 src/crab.js             the crab enemy: walking animation and squish
 src/spider.js           the spider enemy (spooky levels): dangles on a thread, squish
 src/snake.js            the rattlesnake enemy (desert level): slithers and rattles, squish
 src/snowman.js          the evil snowman enemy (snow level): hops, throws snowballs, squish
-src/snowball.js         a thrown snowball: rolls at the truck kicking up snow dust, bursts on a hit
+src/snowball.js         a thrown snowball (or octopus ink): rolls at the truck leaving a fading trail, bursts on a hit
+src/pufferfish.js       the pufferfish enemy (sea level): swims, puffs up when the truck is near, squish
+src/octopus.js          the octopus enemy (sea level): creeps, squirts ink, squish
 src/sound.js            sound effects, generated in code (no audio files)
 src/music.js            background music: 16-bit-style instruments, echo, and one song per look
 assets/sprites/         the truck parts as transparent PNGs

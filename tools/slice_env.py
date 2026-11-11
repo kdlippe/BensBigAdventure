@@ -111,6 +111,30 @@ SNOWBALL = {  # in snowball.png (what the snowmen throw): (x0, y0, x1, y1, keep 
     "snowball_bits": (543, 58, 802, 228, False),  # chunks flying off
 }
 
+SEA_SCENERY = {  # in sea_sheet.png: (x0, y0, x1, y1). The labels under them are dropped.
+    "shipwreck": (565, 14, 983, 372),
+    "coral_arch": (575, 396, 996, 728),  # the finish arch, with bunting and a treasure chest
+    "coral_clump": (36, 376, 188, 520),
+    "sea_grass": (218, 376, 353, 521),
+    "seashells": (371, 415, 546, 520),
+    "anchor": (65, 553, 232, 727),
+    "treasure_chest": (284, 589, 492, 726),
+}
+SEA_CREATURES = {  # in sea_creatures.png: (x0, y0, x1, y1, keep only the biggest piece?)
+    "puffer": (150, 30, 385, 204, True),  # calm pufferfish
+    "puffer_big": (107, 210, 455, 533, True),  # puffed up, spiky and cross
+    "puffer_dizzy": (100, 540, 440, 720, False),  # squished, with stars
+    "octopus": (588, 20, 943, 301, True),  # with a bandana
+    "octopus_dizzy": (560, 300, 992, 500, False),  # squished, with stars and spirals
+    "ink_cloud": (593, 520, 882, 721, True),  # the ink it squirts
+    "ink_splat": (904, 586, 982, 677, True),
+}
+SNORKEL_TRUCK = {  # in truck_snorkel.png (the truck dressed for the underwater level)
+    "truck_body_snorkel": (36, 52, 585, 321, True),  # with goggles and a snorkel
+    "wreck_body_snorkel": (610, 34, 996, 395, True),  # blown up, underwater
+    "bubble_jet": (358, 358, 565, 494, False),  # nitro underwater: a gush of water and bubbles
+}
+
 WRECK = {  # in truck_wreck.png (the truck blown up): (x0, y0, x1, y1, keep only the biggest piece?)
     "wreck_body": (36, 30, 588, 385, True),  # smashed truck, no wheels
     "wreck_wheel1": (29, 369, 241, 576, True),  # tire with a bite out of it
@@ -198,11 +222,44 @@ def seamless(img):
     return Image.fromarray((a * m + shifted * (1 - m)).clip(0, 255).astype(np.uint8))
 
 
-def ground_set(src_prefix, out_suffix, snow=False):
+def seamless_x(rgba):
+    """Like seamless(), but only left-right (for a ground strip)."""
+    a = rgba.astype(np.float32)
+    w = a.shape[1]
+    shifted = np.roll(a, w // 2, axis=1)
+    m = (np.sin(np.pi * (np.arange(w) + 0.5) / w) ** 0.6)[None, :, None]
+    return (a * m + shifted * (1 - m)).clip(0, 255).astype(np.uint8)
+
+
+def clear_wheel_wells(rgba, boxes):
+    """Make the flat dark-grey inside of painted wheel wells see-through (like
+    the normal truck's), keeping the near-black outlines around them, so the
+    shocks can sit behind the body and show through."""
+    out = rgba.copy()
+    rgb = rgba[..., :3].astype(np.int16)
+    lum = rgb.mean(axis=2)
+    flat = (lum > 21) & (lum < 40) & (rgb.max(axis=2) - rgb.min(axis=2) < 18) & (rgba[..., 3] > 0)
+    lab, n = ndimage.label(flat)
+    for (x0, y0, x1, y1) in boxes:
+        ids, counts = np.unique(lab[y0:y1, x0:x1], return_counts=True)
+        for i, c in zip(ids, counts):
+            if i and c > 300:  # the big flat area, not specks
+                out[lab == i, 3] = 0
+    return out
+
+
+def ground_set(src_prefix, out_suffix, snow=False, blend=False):
     """Dirt tile, backdrop and grass strip for one theme. Returns the strip's
-    size and the line the wheels drive on."""
+    size and the line the wheels drive on.
+
+    blend=True: the dirt tile and the strip were cut from a bigger sheet and
+    don't repeat by themselves, so blend their edges (and keep the dirt's shape)."""
     # dirt: shrink it (the snow one isn't seamless, so blend its edges)
-    dirt = Image.open(next(SRC.glob(f"{src_prefix}dirt_tile.*"))).convert("RGB").resize((512, 512), Image.LANCZOS)
+    dirt = Image.open(next(SRC.glob(f"{src_prefix}dirt_tile.*"))).convert("RGB")
+    if blend:
+        dirt = seamless(dirt.resize((512, round(512 * dirt.height / dirt.width)), Image.LANCZOS))
+    else:
+        dirt = dirt.resize((512, 512), Image.LANCZOS)
     if snow:
         dirt = seamless(dirt)
     dirt.save(OUT / f"dirt{out_suffix}.jpg", quality=90)
@@ -222,6 +279,8 @@ def ground_set(src_prefix, out_suffix, snow=False):
     rows = np.where((g.min(axis=2) < 225).any(axis=1))[0]
     y0, y1 = rows.min() - 2, rows.max() + 1
     strip = cut_white(g[y0:y1], snow=snow)
+    if blend:
+        strip = seamless_x(strip)
     h = y1 - y0
     w = round(g.shape[1] * GRASS_HEIGHT / h)
     Image.fromarray(strip).resize((w, GRASS_HEIGHT), Image.LANCZOS).save(OUT / f"grass_strip{out_suffix}.png")
@@ -239,12 +298,13 @@ def ground_set(src_prefix, out_suffix, snow=False):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
 
-    # ground sets: meadow (level 1), spooky (2), desert (3), snow (4)
+    # ground sets: meadow (level 1), spooky (2), desert (3), snow (4), underwater (5)
     ground = {
         "meadow": ground_set("", ""),
         "spooky": ground_set("spooky_", "_spooky"),
         "desert": ground_set("desert_", "_desert"),
         "snow": ground_set("snow_", "_snow", snow=True),
+        "sea": ground_set("sea_", "_sea", blend=True),
     }
     (ROOT / "src" / "groundArt.js").write_text(
         "// Generated by tools/slice_env.py. Do not edit by hand.\n"
@@ -320,6 +380,19 @@ def main():
     for name, (x0, y0, x1, y1, largest) in SNOWBALL.items():
         part = cut_white(src[y0:y1, x0:x1], hole_min=50000, snow=True)
         save(trim(keep_largest(part) if largest else part), f"{name}.png")
+
+    # underwater level (5): scenery, pufferfish and octopus, and the snorkel truck
+    src = load("sea_sheet.png")
+    for name, (x0, y0, x1, y1) in SEA_SCENERY.items():
+        save(trim(keep_largest(cut_white(src[y0:y1, x0:x1], hole_min=400))), f"{name}.png")
+    for sheet, boxes in (("sea_creatures.png", SEA_CREATURES), ("truck_snorkel.png", SNORKEL_TRUCK)):
+        src = load(sheet)
+        for name, (x0, y0, x1, y1, largest) in boxes.items():
+            part = trim(keep_largest(cut_white(src[y0:y1, x0:x1], hole_min=3000)) if largest else cut_white(src[y0:y1, x0:x1], hole_min=3000))
+            if name == "truck_body_snorkel":
+                # its wheel wells (rear, front) are painted dark: open them up
+                part = clear_wheel_wells(part, [(40, 135, 180, 215), (280, 135, 420, 222)])
+            save(part, f"{name}.png")
 
     # crab enemy parts. The eyes are enclosed white areas, so only treat much
     # bigger enclosed white as background.
