@@ -11,9 +11,11 @@ stars on the way to the finish gate. No game over: a crash or a fall into a pit 
 Open that link in any browser: laptop, tablet or phone, from anywhere. There's nothing to install, and
 it's always the latest version.
 
-| Level 1: the meadow | Level 2: the spooky graveyard | Level 3: the desert canyon |
-|---|---|---|
-| ![Level 1: the monster truck parked on the grass in the sunny meadow, with a crab ahead](docs/screenshots/level1.jpg) | ![Level 2: the truck parked in the graveyard under a full moon, with a spider dangling ahead](docs/screenshots/level2.jpg) | ![Level 3: the truck parked in the desert canyon at sunset, among dinosaur skulls, with a rattlesnake ahead](docs/screenshots/level3.jpg) |
+| Level 1: the meadow | Level 2: the spooky graveyard |
+|---|---|
+| ![Level 1: the monster truck parked on the grass in the sunny meadow, with a crab ahead](docs/screenshots/level1.jpg) | ![Level 2: the truck parked in the graveyard under a full moon, with a spider dangling ahead](docs/screenshots/level2.jpg) |
+| **Level 3: the desert canyon** | **Level 4: the snowy mountains** |
+| ![Level 3: the truck parked in the desert canyon at sunset, among dinosaur skulls, with a rattlesnake ahead](docs/screenshots/level3.jpg) | ![Level 4: the truck parked in the snowy mountains with snow falling, a snow spider ahead, and a cabin in the distance](docs/screenshots/level4.jpg) |
 
 ## Playing on a tablet
 

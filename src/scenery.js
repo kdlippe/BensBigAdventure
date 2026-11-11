@@ -13,7 +13,7 @@ const THEME_ART = {
   meadow: { background: 'background', dirt: 'dirt', grass: 'grass_strip', sky: '#c3e9f1' },
   spooky: { background: 'background_spooky', dirt: 'dirt_spooky', grass: 'grass_strip_spooky', sky: '#1d2140' },
   desert: { background: 'background_desert', dirt: 'dirt_desert', grass: 'grass_strip_desert', sky: '#f3c27e' },
-  snow: { background: 'background_snow', dirt: 'dirt_snow', grass: 'grass_strip_snow', sky: '#7fb0de' },
+  snow: { background: 'background_snow', dirt: 'dirt_snow', grass: 'grass_strip_snow', sky: '#92c7eb' },
 };
 
 // Stand-ins for the meadow scenery on the other themes (drawn at the same
