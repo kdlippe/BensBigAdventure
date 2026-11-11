@@ -84,6 +84,22 @@ CRAB = {  # in crab.png: (x0, y0, x1, y1, keep only the biggest piece?)
     "crab_dizzy": (575, 100, 1004, 420, False),  # squished crab + its stars and spirals
 }
 
+WRECK = {  # in truck_wreck.png (the truck blown up): (x0, y0, x1, y1, keep only the biggest piece?)
+    "wreck_body": (36, 30, 588, 385, True),  # smashed truck, no wheels
+    "wreck_wheel1": (29, 369, 241, 576, True),  # tire with a bite out of it
+    "wreck_wheel2": (394, 383, 606, 573, True),  # flat tire
+    "boom_big": (620, 25, 1012, 432, False),  # explosion with flying bits and stars
+    "wreck_shock1": (114, 586, 232, 707, True),
+    "wreck_shock2": (238, 522, 294, 686, False),  # its spring is drawn in two pieces
+    "wreck_shock3": (325, 525, 398, 679, True),
+    "wreck_part1": (46, 619, 116, 696, True),  # bent blue fender
+    "wreck_part2": (302, 676, 379, 725, True),  # bent orange fender
+    "wreck_part3": (260, 450, 316, 492, True),  # bolt
+    "wreck_part4": (401, 644, 477, 709, True),  # rod
+    "wreck_part5": (512, 652, 551, 691, True),  # nut
+    "wreck_part6": (469, 600, 524, 653, True),  # bolt
+}
+
 
 def cut_white(rgb, hole_min=2500):
     """RGB uint8 array on white -> RGBA with the outside white made transparent."""
@@ -266,6 +282,12 @@ def main():
     # the rattle: its own upright drawing. Keep just the rattle (the drawn
     # motion lines are separate bits and get dropped - the game shakes it).
     save(trim(keep_largest(cut_white(load("snake_rattle.png"), hole_min=9000)), pad=1), "snake_rattle.png")
+
+    # the truck blown up (bumping an enemy): wreck, broken wheels, parts, explosions
+    src = load("truck_wreck.png")
+    for name, (x0, y0, x1, y1, largest) in WRECK.items():
+        part = cut_white(src[y0:y1, x0:x1], hole_min=9000)
+        save(trim(keep_largest(part) if largest else part), f"{name}.png")
 
     # spider enemy parts (spooky levels)
     src = load("spider.png")

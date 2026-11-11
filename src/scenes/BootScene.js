@@ -8,6 +8,10 @@ const ENV_PNG = [
   'spider_body', 'spider_legs_left', 'spider_legs_right', 'spider_thread', 'spider_dizzy',
   'snake_body', 'snake_rattle', 'snake_dizzy',
   'btn_nitro', // turbo button art
+  // the truck blown up (bumping an enemy)
+  'wreck_body', 'wreck_wheel1', 'wreck_wheel2', 'boom_big',
+  'wreck_shock1', 'wreck_shock2', 'wreck_shock3',
+  'wreck_part1', 'wreck_part2', 'wreck_part3', 'wreck_part4', 'wreck_part5', 'wreck_part6',
   // spooky levels
   'grass_strip_spooky', 'thorns', 'pumpkin', 'spooky_mushrooms', 'tombstone', 'bones',
   'spooky_tree', 'iron_fence', 'slime_tires', 'spooky_gate',
