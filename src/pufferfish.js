@@ -13,7 +13,7 @@ const SPEED = 55; // px per second
 const PUFF_NEAR = 450; // puffs up when the truck is this close...
 const CALM_FAR = 650; // ...and calms down once it's this far away
 const PUFFED_FOR = 2.0; // while the truck is near: seconds puffed up...
-const CALM_FOR = 1.4; // ...then seconds small (a chance to squish it), and again
+const CALM_FOR = 5; // ...then seconds small after it shrinks (a chance to squish it), and again
 const DIZZY_W = 175;
 
 export class Pufferfish {
