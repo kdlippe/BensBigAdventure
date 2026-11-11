@@ -134,6 +134,14 @@ class Sfx {
     [784, 988, 1175, 1568].forEach((n, i) => this.tone(n, 0.2, { type: 'triangle', vol: 0.2, delay: 1.1 + i * 0.1 }));
   }
 
+  // through the warp gate: a sparkly whoosh up and back down
+  warp() {
+    this.tone(300, 0.35, { type: 'triangle', vol: 0.22, slideTo: 1400 });
+    this.tone(1400, 0.3, { type: 'triangle', vol: 0.16, slideTo: 500, delay: 0.3 });
+    this.noise(0.4, { vol: 0.12, freq: 3000 });
+    [1568, 2093, 2637].forEach((n, i) => this.tone(n, 0.08, { type: 'sine', vol: 0.08, delay: 0.32 + i * 0.07 }));
+  }
+
   button() {
     this.tone(520, 0.1, { type: 'triangle', vol: 0.2, slideTo: 780 });
   }

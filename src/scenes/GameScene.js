@@ -32,6 +32,7 @@ const NITRO_MAX = 3; // most charges you can carry
 const NITRO_START = 1; // charges at the start of the level
 
 const BRAKE = 700; // how hard reverse slows you down from nitro speed
+const WARP_AT = (L) => L - 300; // boss arena: driving right past here goes through the warp gate
 const FLAME_DIR = 0.95; // flames shoot up and back from the pipes (radians from straight back)
 const FLAME_LENGTH = 150; // how long a nitro flame jet is, in game px
 const FIRE_COLOURS = [0xffffff, 0xfff176, 0xffb300, 0xff6d00, 0xd50000];
@@ -112,6 +113,7 @@ export class GameScene extends Phaser.Scene {
     this.boss = this.level.boss === 'kingcrab'
       ? new KingCrab(this, { x: L * 0.62, minX: 1100, maxX: L - 650 })
       : null;
+    if (this.boss) this.makeWarpGates();
     this.bumpCooldown = 0;
 
     this.cans = this.level.nitro.map((n, i) => {
@@ -698,8 +700,9 @@ export class GameScene extends Phaser.Scene {
     const t = this.t;
     const b = this.boss;
     b.update(dt, time, this.level.groundY);
-    // the arena's walls
+    // the arena's walls (the right one is a warp gate)
     const L = this.level.length;
+    if (t.x > WARP_AT(L) && t.vx > 0 && !this.finished) this.warp();
     if (t.x < 220) {
       t.x = 220;
       t.vx = Math.max(0, t.vx);
@@ -732,6 +735,59 @@ export class GameScene extends Phaser.Scene {
       sfx.bump();
       this.cameras.main.shake(160, 0.01);
     }
+  }
+
+  // Two warp gates at the ends of the boss arena: drive into the one on the right
+  // and you pop out of the one on the left, still driving. Then you can't get stuck
+  // on the right of the King Crab (backing up is too slow to jump onto its shell).
+  makeWarpGates() {
+    const L = this.level.length;
+    this.warpGates = [L - 120, 110].map((x) => {
+      const y = this.level.groundY(x) + 12; // its bottom sits in the ground
+      const glow = this.add.image(x, y, 'warp_glow').setOrigin(0.5, 1).setDepth(18);
+      const ring = this.add.image(x, y + 10, 'warp_ring').setOrigin(0.5, 1).setDepth(18);
+      // shimmer: the inside pulses
+      this.tweens.add({ targets: glow, alpha: { from: 0.75, to: 1 }, scaleX: { from: 0.94, to: 1.04 }, yoyo: true, repeat: -1, duration: 650, ease: 'Sine.inOut' });
+      // sparkles drifting up out of it
+      this.add.particles(x, y - 160, 'flare', {
+        x: { min: -45, max: 45 },
+        y: { min: -130, max: 130 },
+        speedY: { min: -60, max: -20 },
+        lifespan: 1100,
+        scale: { start: 0.35, end: 0 },
+        alpha: { start: 0.9, end: 0 },
+        tint: [0xffffff, 0xe0b8ff, 0xb98cff],
+        blendMode: 'ADD',
+        frequency: 110,
+      }).setDepth(19);
+      return { x, y, glow, ring };
+    });
+    this.warpCooldown = 0;
+  }
+
+  // through the right-hand gate and out of the left one
+  warp() {
+    if (this.time.now < this.warpCooldown) return;
+    this.warpCooldown = this.time.now + 800;
+    const t = this.t;
+    const [from, to] = this.warpGates;
+    const flash = (g) => {
+      const f = this.add.image(g.x, g.y - 155, 'warp_glow').setDepth(40).setBlendMode('ADD').setScale(0.6);
+      this.tweens.add({ targets: f, scale: 1.6, alpha: 0, duration: 450, ease: 'Quad.out', onComplete: () => f.destroy() });
+      this.tweens.add({ targets: [g.ring, g.glow], scaleX: 1.25, yoyo: true, duration: 140 });
+    };
+    flash(from);
+    flash(to);
+    sfx.warp();
+    const oldX = t.x;
+    t.x = to.x + 210; // just out of the left gate, keeping its speed
+    t.vx = Math.max(t.vx, 300);
+    this.nitro.time = 0;
+    // the camera jumps along with it (instead of sliding across the arena)
+    const cam = this.cameras.main;
+    cam.scrollX += t.x - oldX;
+    this.truck.container.setAlpha(0);
+    this.tweens.add({ targets: this.truck.container, alpha: 1, duration: 250 });
   }
 
   bossRoar() {
