@@ -155,6 +155,12 @@ KING_SLAM = {  # the claw slam: the arm (in king_arms.png) and the impact (king_
     "king_slam_dust_r": ("king_slam_fx.png", (754, 532, 1003, 725), False),  # ...and right
 }
 
+TRUCK2 = {  # the second truck to pick (the ghost truck), in truck2.png: (x0, y0, x1, y1, keep only the biggest piece?)
+    "truck2_body": (39, 111, 536, 311, True),  # green and purple, ghosts and a skull on the side
+    "truck2_wreck": (556, 44, 996, 293, True),
+    "truck2_boom": (464, 362, 792, 686, False),
+}
+
 WRECK = {  # in truck_wreck.png (the truck blown up): (x0, y0, x1, y1, keep only the biggest piece?)
     "wreck_body": (36, 30, 588, 385, True),  # smashed truck, no wheels
     "wreck_wheel1": (29, 369, 241, 576, True),  # tire with a bite out of it
@@ -265,6 +271,34 @@ def clear_wheel_wells(rgba, boxes):
         for i, c in zip(ids, counts):
             if i and c > 300:  # the big flat area, not specks
                 out[lab == i, 3] = 0
+    return out
+
+
+def recolor_wheel(rgba, rim_hue, hub_hue, rim_sat=1.0):
+    """Repaint Ben's wheel: the orange rim and the red hub get new hues, keeping
+    all the shading (the black tire is left alone)."""
+    a = rgba.astype(np.float32) / 255
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    mx, mn = a[..., :3].max(axis=2), a[..., :3].min(axis=2)
+    d = np.where(mx - mn == 0, 1e-6, mx - mn)
+    h = np.where(mx == r, ((g - b) / d) % 6, np.where(mx == g, (b - r) / d + 2, (r - g) / d + 4)) * 60
+    sat = np.where(mx == 0, 0, (mx - mn) / np.where(mx == 0, 1, mx))
+    coloured = (rgba[..., 3] > 0) & (sat > 0.3) & (mx > 0.2)
+    rim = coloured & (h >= 18) & (h < 70)
+    hub = coloured & ((h < 18) | (h > 320))
+    out = rgba.copy()
+    for mask, hue, sscale in ((rim, rim_hue, rim_sat), (hub, hub_hue, 1.0)):
+        hh = hue / 60
+        c = mx[mask] * np.clip(sat[mask] * sscale, 0, 1)
+        x = c * (1 - abs(hh % 2 - 1))
+        m = mx[mask] - c
+        k = int(hh) % 6
+        rr, gg, bb = [(c, x, 0), (x, c, 0), (0, c, x), (0, x, c), (x, 0, c), (c, 0, x)][k]
+        z = np.zeros_like(c)
+        rgb = [v if not isinstance(v, int) else z for v in (rr, gg, bb)]
+        out[mask, 0] = ((rgb[0] + m) * 255).clip(0, 255)
+        out[mask, 1] = ((rgb[1] + m) * 255).clip(0, 255)
+        out[mask, 2] = ((rgb[2] + m) * 255).clip(0, 255)
     return out
 
 
@@ -436,6 +470,26 @@ def main():
     for name, (sheet, (x0, y0, x1, y1), largest) in KING_SLAM.items():
         part = cut_white(load(sheet)[y0:y1, x0:x1], hole_min=3000)
         save(trim(keep_largest(part) if largest else part), f"{name}.png")
+
+    # the second truck (the ghost truck). Its wheels: Ben's side-on wheel repainted like
+    # the reference picture (truck2_reference.png) - lime-green rims with purple
+    # hubs near, purple rims on the far side
+    wheel = np.array(Image.open(ROOT / "assets" / "sprites" / "wheel.png").convert("RGBA"))
+    save(recolor_wheel(wheel, rim_hue=96, hub_hue=280), "truck2_wheel.png")
+    save(recolor_wheel(wheel, rim_hue=275, hub_hue=96, rim_sat=0.7), "truck2_wheel_far.png")
+    src = load("truck2.png")
+    for name, (x0, y0, x1, y1, largest) in TRUCK2.items():
+        part = cut_white(src[y0:y1, x0:x1], hole_min=3000)
+        part = trim(keep_largest(part) if largest else part)
+        if name == "truck2_body":
+            part = clear_wheel_wells(part, [(45, 110, 130, 168), (280, 110, 365, 175)])
+        save(part, f"{name}.png")
+    # the same truck dressed for underwater: goggles and a snorkel (its own picture)
+    save(trim(keep_largest(cut_white(load("truck2_snorkel_body.png"), hole_min=3000))), "truck2_body_snorkel.png")
+    # its chassis: lime-green tube frame with the shocks built in (truck2_chassis.png).
+    # Every gap between the tubes is background (nothing white in it is art).
+    part = cut_white(load("truck2_chassis.png"), hole_min=60)
+    save(trim(keep_largest(part)), "truck2_chassis.png")
 
     # crab enemy parts. The eyes are enclosed white areas, so only treat much
     # bigger enclosed white as background.

@@ -3,7 +3,7 @@ import { sfx } from '../sound.js';
 import { music } from '../music.js';
 import { requestLandscape } from '../device.js';
 import { textStyle, pillButton } from '../style.js';
-import { loadProgress, saveProgress } from '../progress.js';
+import { loadProgress, saveProgress, loadTruck, saveTruck } from '../progress.js';
 import { addBackdrop, addGround, SKY } from '../scenery.js';
 
 export class TitleScene extends Phaser.Scene {
@@ -18,13 +18,51 @@ export class TitleScene extends Phaser.Scene {
     const groundY = 560;
     this.add.image(170, groundY + 30, 'tree').setOrigin(0.5, 1).setScale(0.9).setDepth(8);
     this.add.image(1110, groundY + 22, 'bush').setOrigin(0.5, 1).setScale(0.4).setDepth(8);
-    this.add.image(1010, groundY + 10, 'tires').setOrigin(0.5, 1).setScale(0.4).setDepth(9);
+    this.add.image(1215, groundY + 10, 'tires').setOrigin(0.5, 1).setScale(0.4).setDepth(9);
     addGround(this, () => groundY, 0, width + 800);
     this.add.image(330, groundY + 8, 'flower').setOrigin(0.5, 1).setScale(0.24).setDepth(12);
-    this.add.image(880, groundY + 8, 'mushroom').setOrigin(0.5, 1).setScale(0.22).setDepth(12);
+    this.add.image(width / 2 + 10, groundY + 8, 'mushroom').setOrigin(0.5, 1).setScale(0.22).setDepth(12);
 
-    const truck = new Truck(this, width / 2, groundY - WHEEL_R);
-    truck.container.setDepth(30);
+    // pick a truck: both are parked side by side, tap one to drive it. The
+    // picked one bounces on its springs; the other waits, a little faded.
+    let picked = loadTruck();
+    const choices = [
+      { n: 1, look: 'normal', x: width / 2 - 250, name: "BEN'S TRUCK", pill: 'pill_blue' },
+      { n: 2, look: 'truck2', x: width / 2 + 270, name: 'GHOST TRUCK', pill: 'pill_green' },
+    ].map((c) => {
+      const truck = new Truck(this, c.x, groundY - WHEEL_R, c.look);
+      truck.container.setDepth(30).setScale(0.85);
+      truck.container.list.forEach((o) => (o.baseTint = o.tintTopLeft)); // the far wheels are already darker
+      // tap anywhere on the truck: the box covers the body and wheels (a container's
+      // tap box is measured from the corner of its 420x300 size, not its middle)
+      truck.container.setSize(420, 300).setInteractive(new Phaser.Geom.Rectangle(0, -100, 420, 300), Phaser.Geom.Rectangle.Contains);
+      truck.container.input.cursor = 'pointer';
+      truck.container.on('pointerdown', () => pick(c.n));
+      const tag = pillButton(this, c.x, groundY + 95, c.pill, c.name, () => pick(c.n), { scale: 0.62, fontSize: 30, fixed: false });
+      tag.parts.forEach((o) => o.setDepth(31));
+      return { ...c, truck, tag };
+    });
+    const show = () => {
+      for (const c of choices) {
+        const on = c.n === picked;
+        // shrunk around the hub midpoint, so lower it to keep the tires on the grass
+        const scale = on ? 0.9 : 0.8;
+        c.truck.container.setScale(scale).setY(groundY - WHEEL_R * scale);
+        // the waiting truck is greyed out (a tint, so its parts don't show through each other)
+        c.truck.container.list.forEach((o) => o.setTint(on ? o.baseTint : Phaser.Display.Color.ValueToColor(o.baseTint).darken(45).color));
+        c.tag.parts.forEach((o) => o.setAlpha(on ? 1 : 0.6));
+      }
+    };
+    const pick = (n) => {
+      if (n !== picked) {
+        picked = n;
+        saveTruck(n);
+        sfx.unlock();
+        sfx.button();
+      }
+      show();
+    };
+    show();
     this.tweens.addCounter({
       from: 0,
       to: Math.PI * 2,
@@ -32,7 +70,10 @@ export class TitleScene extends Phaser.Scene {
       repeat: -1,
       onUpdate: (tw) => {
         const v = tw.getValue();
-        truck.pose(5 + Math.sin(v) * 5, Math.sin(v * 2) * 0.01);
+        for (const c of choices) {
+          if (c.n === picked) c.truck.pose(5 + Math.sin(v) * 5, Math.sin(v * 2) * 0.01);
+          else c.truck.pose(0, 0);
+        }
       },
     });
 
