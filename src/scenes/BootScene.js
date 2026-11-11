@@ -217,6 +217,21 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0xffffff, 0.95).fillCircle(13, 13, 4);
     });
 
+    // the warp gate in the boss arena: an upright glowing oval, swirly purple inside
+    // (WARP_W x WARP_H; its inside is drawn separately so it can shimmer)
+    this.tex('warp_ring', 150, 330, (g) => {
+      g.lineStyle(16, OUTLINE).strokeEllipse(75, 165, 132, 312);
+      g.lineStyle(10, 0xb455ff).strokeEllipse(75, 165, 132, 312);
+      g.lineStyle(3, 0xf0d0ff).strokeEllipse(73, 160, 118, 296);
+    });
+    this.tex('warp_glow', 130, 310, (g) => {
+      const rings = [[0x5b1a9e, 1], [0x7a2fd0, 0.85], [0x9c5cf0, 0.7], [0xc79bff, 0.6], [0xf3e6ff, 0.8]];
+      rings.forEach(([c, s], i) => {
+        const k = 1 - i * 0.19;
+        g.fillStyle(c, s).fillEllipse(65, 155, 124 * k, 304 * k);
+      });
+    });
+
     // a soft snowflake (falling snow on the snow level)
     this.tex('snowflake', 16, 16, (g) => {
       g.fillStyle(0xffffff, 0.35).fillCircle(8, 8, 8);
