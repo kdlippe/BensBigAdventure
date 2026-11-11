@@ -18,6 +18,10 @@ const ENV_PNG = [
   // desert level
   'grass_strip_desert', 'cactus', 'desert_rocks', 'tumbleweed', 'prickly_pear', 'cow_skull',
   'trex_skull', 'ranch_fence', 'dusty_tires', 'desert_gate',
+  // snow level
+  'grass_strip_snow', 'snow_log', 'ice_crystals', 'snowballs', 'icy_bramble', 'ice_rock',
+  'snow_fence', 'snow_gate', 'snow_tires', 'snow_tree',
+  'snowspider_body', 'snowspider_leg1', 'snowspider_leg2', 'snowspider_leg3', 'snowspider_leg4', 'snowspider_dizzy',
   'fence', 'tree', 'tires', 'finish_gate',
 ];
 const OUTLINE = 0x16161a;
@@ -56,7 +60,7 @@ export class BootScene extends Phaser.Scene {
     const url = (path) => (v ? `${path}?v=${v}` : path);
     for (const key of SPRITES) this.load.image(key, url(`assets/sprites/${key}.png`));
     for (const key of ENV_PNG) this.load.image(key, url(`assets/env/${key}.png`));
-    for (const theme of ['', '_spooky', '_desert']) {
+    for (const theme of ['', '_spooky', '_desert', '_snow']) {
       this.load.image(`dirt${theme}`, url(`assets/env/dirt${theme}.jpg`));
       this.load.image(`background${theme}`, url(`assets/env/background${theme}.jpg`));
     }
@@ -202,5 +206,11 @@ export class BootScene extends Phaser.Scene {
 
     // speed line for the nitro rush
     this.tex('speedline', 160, 8, (g) => g.fillStyle(0xffffff).fillRoundedRect(0, 0, 160, 8, 4));
+
+    // a soft snowflake (falling snow on the snow level)
+    this.tex('snowflake', 16, 16, (g) => {
+      g.fillStyle(0xffffff, 0.35).fillCircle(8, 8, 8);
+      g.fillStyle(0xffffff, 1).fillCircle(8, 8, 5);
+    });
   }
 }

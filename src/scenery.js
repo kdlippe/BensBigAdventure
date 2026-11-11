@@ -1,7 +1,7 @@
 // Drawing the world: the painted backdrop, the dirt and the bendy grass strip.
 // Shared by the title screen and the levels. Each level has a look ("theme"):
-// the sunny meadow (levels 1-2, title screen), the spooky night (levels 3-4)
-// and the desert canyon (level 5).
+// the sunny meadow (levels 1-2, title screen), the spooky night (levels 3-4),
+// the desert canyon (level 5) and the snowy mountains (level 6).
 
 import { GROUND_ART } from './groundArt.js';
 
@@ -13,6 +13,7 @@ const THEME_ART = {
   meadow: { background: 'background', dirt: 'dirt', grass: 'grass_strip', sky: '#c3e9f1' },
   spooky: { background: 'background_spooky', dirt: 'dirt_spooky', grass: 'grass_strip_spooky', sky: '#1d2140' },
   desert: { background: 'background_desert', dirt: 'dirt_desert', grass: 'grass_strip_desert', sky: '#f3c27e' },
+  snow: { background: 'background_snow', dirt: 'dirt_snow', grass: 'grass_strip_snow', sky: '#7fb0de' },
 };
 
 // Stand-ins for the meadow scenery on the other themes (drawn at the same
@@ -39,6 +40,17 @@ export const THEME_SCENERY = {
     mushroom: 'cow_skull',
     rocks: 'desert_rocks',
     finish_gate: 'desert_gate',
+  },
+  snow: {
+    tree: 'snow_tree',
+    bush: 'snow_log',
+    fence: 'snow_fence',
+    tires: 'snow_tires',
+    tuft: 'icy_bramble',
+    flower: 'ice_crystals',
+    mushroom: 'snowballs',
+    rocks: 'ice_rock',
+    finish_gate: 'snow_gate',
   },
 };
 

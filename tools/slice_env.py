@@ -6,6 +6,8 @@
  * ramp.png        -> ramp.png + src/rampProfile.js (the plank's top curve)
  * decorations.png -> tuft/mushroom/rocks/flower/bush.png
  * props.png       -> fence/tree/tires/finish_gate.png
+ * spooky_*, desert_*, snow_* -> the same for the other looks (snow uses a
+   "snow" cut, since snow is nearly white)
 
 The white-background sheets get a real alpha channel: white connected to the
 image border becomes transparent, and the anti-aliased edge pixels next to it
@@ -84,6 +86,28 @@ CRAB = {  # in crab.png: (x0, y0, x1, y1, keep only the biggest piece?)
     "crab_dizzy": (575, 100, 1004, 420, False),  # squished crab + its stars and spirals
 }
 
+SNOW_DECOR = {  # in snow_decorations.png
+    "snow_log": (44, 49, 620, 349),
+    "ice_crystals": (705, 54, 960, 320),
+    "snowballs": (35, 420, 358, 695),
+    "icy_bramble": (371, 418, 667, 694),
+    "ice_rock": (687, 410, 995, 699),
+}
+SNOW_PROPS = {  # in snow_props.png
+    "snow_fence": (33, 28, 973, 273),
+    "snow_gate": (19, 287, 533, 747),
+    "snow_tires": (532, 427, 762, 745),
+    "snow_tree": (751, 361, 1018, 743),
+}
+SNOW_SPIDER = {  # in snow_spider.png: (x0, y0, x1, y1, keep only the biggest piece?)
+    "snowspider_body": (65, 48, 454, 417, True),  # the snowball with the grumpy face
+    "snowspider_leg1": (29, 355, 112, 624, True),  # far left (top end is the hip)
+    "snowspider_leg2": (112, 429, 213, 652, True),
+    "snowspider_leg3": (310, 459, 419, 712, True),
+    "snowspider_leg4": (418, 355, 516, 619, True),  # far right
+    "snowspider_dizzy": (540, 120, 1018, 446, False),  # squished, with stars and spirals
+}
+
 WRECK = {  # in truck_wreck.png (the truck blown up): (x0, y0, x1, y1, keep only the biggest piece?)
     "wreck_body": (36, 30, 588, 385, True),  # smashed truck, no wheels
     "wreck_wheel1": (29, 369, 241, 576, True),  # tire with a bite out of it
@@ -101,10 +125,17 @@ WRECK = {  # in truck_wreck.png (the truck blown up): (x0, y0, x1, y1, keep only
 }
 
 
-def cut_white(rgb, hole_min=2500):
-    """RGB uint8 array on white -> RGBA with the outside white made transparent."""
+def cut_white(rgb, hole_min=2500, snow=False):
+    """RGB uint8 array on white -> RGBA with the outside white made transparent.
+
+    snow=True: for snowy art, where the snow itself is nearly white. Only
+    neutral near-white counts as background (the paper is pure white; the
+    snow is tinted a little blue)."""
     rgb = rgb.astype(np.int16)
-    whitish = rgb.min(axis=2) > 222
+    if snow:
+        whitish = (rgb.min(axis=2) > 238) & (rgb.max(axis=2) - rgb.min(axis=2) <= 8)
+    else:
+        whitish = rgb.min(axis=2) > 222
     lab, n = ndimage.label(whitish)
     border = np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))
     bg = np.isin(lab, border[border > 0])
@@ -152,13 +183,26 @@ def save(arr, name):
     print(f"{name}: {arr.shape[1]}x{arr.shape[0]}")
 
 
-def ground_set(src_prefix, out_suffix):
+def seamless(img):
+    """Make a tile repeat without seams: blend it with a copy shifted by half,
+    using the copy near the edges (where it joins up with itself)."""
+    a = np.asarray(img).astype(np.float32)
+    h, w = a.shape[:2]
+    shifted = np.roll(a, (h // 2, w // 2), axis=(0, 1))
+    wx = np.sin(np.pi * (np.arange(w) + 0.5) / w) ** 0.6
+    wy = np.sin(np.pi * (np.arange(h) + 0.5) / h) ** 0.6
+    m = (wy[:, None] * wx[None, :])[..., None]
+    return Image.fromarray((a * m + shifted * (1 - m)).clip(0, 255).astype(np.uint8))
+
+
+def ground_set(src_prefix, out_suffix, snow=False):
     """Dirt tile, backdrop and grass strip for one theme. Returns the strip's
     size and the line the wheels drive on."""
-    # dirt: already seamless, just shrink it
-    Image.open(next(SRC.glob(f"{src_prefix}dirt_tile.*"))).convert("RGB").resize((512, 512), Image.LANCZOS).save(
-        OUT / f"dirt{out_suffix}.jpg", quality=90
-    )
+    # dirt: shrink it (the snow one isn't seamless, so blend its edges)
+    dirt = Image.open(next(SRC.glob(f"{src_prefix}dirt_tile.*"))).convert("RGB").resize((512, 512), Image.LANCZOS)
+    if snow:
+        dirt = seamless(dirt)
+    dirt.save(OUT / f"dirt{out_suffix}.jpg", quality=90)
     # backdrop: has to repeat left-right. If its two edges don't match, put a
     # mirrored copy next to it, so the edges always meet their mirror image.
     bg = Image.open(SRC / f"{src_prefix}background.png").convert("RGB")
@@ -174,7 +218,7 @@ def ground_set(src_prefix, out_suffix):
     g = load(f"{src_prefix}grass_strip.png")
     rows = np.where((g.min(axis=2) < 225).any(axis=1))[0]
     y0, y1 = rows.min() - 2, rows.max() + 1
-    strip = cut_white(g[y0:y1])
+    strip = cut_white(g[y0:y1], snow=snow)
     h = y1 - y0
     w = round(g.shape[1] * GRASS_HEIGHT / h)
     Image.fromarray(strip).resize((w, GRASS_HEIGHT), Image.LANCZOS).save(OUT / f"grass_strip{out_suffix}.png")
@@ -192,11 +236,12 @@ def ground_set(src_prefix, out_suffix):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
 
-    # ground sets: meadow (levels 1-2) and spooky (levels 3-5)
+    # ground sets: meadow (levels 1-2), spooky (3-4), desert (5), snow (6)
     ground = {
         "meadow": ground_set("", ""),
         "spooky": ground_set("spooky_", "_spooky"),
         "desert": ground_set("desert_", "_desert"),
+        "snow": ground_set("snow_", "_snow", snow=True),
     }
     (ROOT / "src" / "groundArt.js").write_text(
         "// Generated by tools/slice_env.py. Do not edit by hand.\n"
@@ -249,6 +294,21 @@ def main():
         for name, (x0, y0, x1, y1) in boxes.items():
             hole = 30 if name == "tumbleweed" else 150
             save(trim(cut_white(src[y0:y1, x0:x1], hole_min=hole)), f"{name}.png")
+
+    # snow scenery for level 6 (snow is nearly white, so cut in snow mode;
+    # the gaps in the fence and under the gate are pure white and go)
+    for sheet, boxes in (("snow_decorations.png", SNOW_DECOR), ("snow_props.png", SNOW_PROPS)):
+        src = load(sheet)
+        for name, (x0, y0, x1, y1) in boxes.items():
+            # the snowballs' shiny spots are pure white too: keep enclosed white there
+            hole = 50000 if name == "snowballs" else 400
+            save(trim(cut_white(src[y0:y1, x0:x1], hole_min=hole, snow=True)), f"{name}.png")
+
+    # snow spider enemy (level 6): snowball body, four icy legs, squished
+    src = load("snow_spider.png")
+    for name, (x0, y0, x1, y1, largest) in SNOW_SPIDER.items():
+        part = cut_white(src[y0:y1, x0:x1], hole_min=400, snow=True)
+        save(trim(keep_largest(part) if largest else part), f"{name}.png")
 
     # crab enemy parts. The eyes are enclosed white areas, so only treat much
     # bigger enclosed white as background.

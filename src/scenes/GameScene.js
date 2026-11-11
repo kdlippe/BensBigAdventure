@@ -10,6 +10,7 @@ import { FLAME_ART } from '../flameArt.js';
 import { Crab, CRAB_HALF_WIDTH } from '../crab.js';
 import { Spider } from '../spider.js';
 import { Snake } from '../snake.js';
+import { SnowSpider } from '../snowspider.js';
 
 // ---- feel knobs (tweak these to make the truck faster, floatier, bouncier) ----
 const GRAVITY = 1500;
@@ -93,7 +94,7 @@ export class GameScene extends Phaser.Scene {
 
     // the level's enemies: dangling spiders on spooky levels, rattlesnakes in
     // the desert, crabs in the meadow
-    const Enemy = { spooky: Spider, desert: Snake }[this.level.theme] || Crab;
+    const Enemy = { spooky: Spider, desert: Snake, snow: SnowSpider }[this.level.theme] || Crab;
     this.crabs = this.level.crabs.map((c) => new Enemy(this, c));
     this.bumpCooldown = 0;
 
@@ -128,6 +129,7 @@ export class GameScene extends Phaser.Scene {
     this.truck = new Truck(this, this.t.x, this.t.y);
     this.truck.container.setDepth(30);
     this.makeFire();
+    if (this.level.theme === 'snow') this.makeSnowfall();
 
     // camera looks a bit ahead of the truck
     this.cameras.main.startFollow(this.truck.container, false, 0.12, 0.08, -260, 90);
@@ -716,7 +718,7 @@ export class GameScene extends Phaser.Scene {
     // the wreck smokes
     this.smokeTimer = 0.2;
 
-    const who = { spooky: 'spider', desert: 'snake' }[this.level.theme] || 'crab';
+    const who = { spooky: 'spider', desert: 'snake', snow: 'snow spider' }[this.level.theme] || 'crab';
     this.time.delayedCall(1600, () =>
       this.fail({ title: 'KA-BOOM!', sub: `Jump on the ${who} to squish it!`, sound: false })
     );
@@ -863,7 +865,7 @@ export class GameScene extends Phaser.Scene {
 
     const parts = [g];
     const last = this.levelNum >= this.level.count;
-    const heading = last ? 'You beat all 5 levels, Ben!' : `Level ${this.levelNum} done, Ben!`;
+    const heading = last ? `You beat all ${this.level.count} levels, Ben!` : `Level ${this.levelNum} done, Ben!`;
     const head = this.add.text(width / 2, 145, heading, textStyle(56, '#ff7043')).setOrigin(0.5);
     if (head.width > 600) head.setScale(600 / head.width);
     parts.push(head);
@@ -996,6 +998,23 @@ export class GameScene extends Phaser.Scene {
         .setScale(Phaser.Math.FloatBetween(0.6, 1.4), 1);
       this.tweens.add({ targets: l, x: -200, duration: 260, onComplete: () => l.destroy() });
     }
+  }
+
+  // Gently falling snow, drifting in front of the world (behind the buttons).
+  // It's pinned to the screen, so it falls the same wherever the camera is.
+  makeSnowfall() {
+    const { width, height } = this.scale;
+    this.add.particles(0, 0, 'snowflake', {
+      x: { min: -100, max: width + 100 },
+      y: -20,
+      lifespan: 7000,
+      speedY: { min: 60, max: 130 },
+      speedX: { min: -40, max: 10 },
+      scale: { min: 0.3, max: 0.9 },
+      alpha: { min: 0.6, max: 0.95 },
+      frequency: 60,
+      advance: 7000, // already snowing when the level starts
+    }).setScrollFactor(0).setDepth(90);
   }
 
   // Two flame jets (one per exhaust pipe) plus a stream of fire particles
