@@ -1,5 +1,5 @@
 import { buildLevel, BOX, PIT_BOTTOM } from '../level.js';
-import { loadProgress, saveProgress, loadBest, saveBest } from '../progress.js';
+import { loadProgress, saveProgress, loadBest, saveBest, loadTruck } from '../progress.js';
 import { Truck, WHEEL_R, HALF_BASE } from '../truck.js';
 import { sfx } from '../sound.js';
 import { music } from '../music.js';
@@ -142,7 +142,11 @@ export class GameScene extends Phaser.Scene {
       tilt: 0,
     };
     this.underwater = this.level.theme === 'sea';
-    this.truck = new Truck(this, this.t.x, this.t.y, this.underwater ? 'snorkel' : 'normal');
+    // the truck Ben picked on the title screen (?truck=1 or ?truck=2 in the address overrides it)
+    const asked = new URLSearchParams(location.search).get('truck');
+    this.truck2 = asked ? asked === '2' : loadTruck() === 2;
+    const look = this.truck2 ? (this.underwater ? 'truck2_snorkel' : 'truck2') : this.underwater ? 'snorkel' : 'normal';
+    this.truck = new Truck(this, this.t.x, this.t.y, look);
     this.truck.container.setDepth(30);
     this.makeFire();
     if (this.level.theme === 'snow') this.makeSnowfall();
@@ -257,7 +261,7 @@ export class GameScene extends Phaser.Scene {
       this.progressBar = { x: bx, w: bw };
       // pole stands just below the bar; its top lines up with the other bubbles, clear of the screen edge
       this.add.image(bx + bw + 10, 74, 'flag').setScale(0.2).setScrollFactor(0).setDepth(102).setOrigin(0.1, 1);
-      this.progressTruck = this.add.image(bx, 42, 'truck_icon').setScale(0.19).setScrollFactor(0).setDepth(103);
+      this.progressTruck = this.add.image(bx, 42, this.truck2 ? 'truck2_icon' : 'truck_icon').setScale(0.19).setScrollFactor(0).setDepth(103);
     }
 
     // race timer (top right)
@@ -821,17 +825,23 @@ export class GameScene extends Phaser.Scene {
     // the smashed truck: about the truck body's size, hops up and lands
     // (underwater the wreck is the front half with its snapped snorkel)
     const bodyW = width('truck_body') * 0.32 * (this.underwater ? 0.75 : 1.05);
-    piece(this.underwater ? 'wreck_body_snorkel' : 'wreck_body', centre.x, centre.y + 20, bodyW, away * 50, -480, away * 0.35, 30);
+    const wreckKey = tr.look.wreck || (this.underwater ? 'wreck_body_snorkel' : 'wreck_body');
+    piece(wreckKey, centre.x, centre.y + 20, tr.look.wreck ? width('truck_body') * 0.32 : bodyW, away * 50, -480, away * 0.35, 30);
     this.wreck = this.wreckBits[0];
     this.wreck.upright = true; // settles flat when it stops
 
     // the four wheels: two broken ones in front, the far ones behind, darker
     const hub = (lx) => tr.toWorld(lx, 0);
+    // (a truck with its own wheels throws those - whole - instead of Ben's broken ones)
+    const L = tr.look;
+    const [w1, w2, w3, w4] = L.wheel
+      ? [L.wheel, L.wheel, L.farWheel || L.wheel, L.farWheel || L.wheel]
+      : ['wreck_wheel1', 'wreck_wheel2', 'wreck_wheel2', 'wreck_wheel1'];
     const wheels = [
-      ['wreck_wheel1', hub(-98), away * rnd(250, 380), -rnd(650, 800), 31],
-      ['wreck_wheel2', hub(98), -away * rnd(80, 200), -rnd(700, 900), 31],
-      ['wreck_wheel2', hub(-74), away * rnd(400, 520), -rnd(500, 650), 29],
-      ['wreck_wheel1', hub(122), -away * rnd(300, 420), -rnd(550, 700), 29],
+      [w1, hub(-98), away * rnd(250, 380), -rnd(650, 800), 31],
+      [w2, hub(98), -away * rnd(80, 200), -rnd(700, 900), 31],
+      [w3, hub(-74), away * rnd(400, 520), -rnd(500, 650), 29],
+      [w4, hub(122), -away * rnd(300, 420), -rnd(550, 700), 29],
     ];
     wheels.forEach(([key, p, vx, vy, depth], i) => {
       const w = piece(key, p.x, p.y, WHEEL_R * 2 * (i < 2 ? 1 : 0.95), vx, vy, vx / WHEEL_R, depth);
@@ -840,7 +850,7 @@ export class GameScene extends Phaser.Scene {
 
     // shocks, fenders, bolts and a nut fly everywhere
     const bits = [
-      ['wreck_shock1', 70], ['wreck_shock2', 60], ['wreck_shock3', 66],
+      ...(L.frame ? [[L.frame.key, 220]] : [['wreck_shock1', 70], ['wreck_shock2', 60], ['wreck_shock3', 66]]),
       ['wreck_part1', 46], ['wreck_part2', 50], ['wreck_part3', 32],
       ['wreck_part4', 44], ['wreck_part5', 22], ['wreck_part6', 30],
     ];
@@ -854,8 +864,9 @@ export class GameScene extends Phaser.Scene {
     const cam = this.cameras.main;
     cam.flash(180, 255, 236, 180);
     cam.shake(450, 0.02);
-    const s = 420 / width('boom_big');
-    const boom = this.add.image(centre.x, centre.y - 10, 'boom_big').setDepth(40).setScale(s * 0.1).setAlpha(0);
+    const boomKey = tr.look.boom || 'boom_big'; // the second truck has its own green-flash explosion
+    const s = 420 / width(boomKey);
+    const boom = this.add.image(centre.x, centre.y - 10, boomKey).setDepth(40).setScale(s * 0.1).setAlpha(0);
     this.tweens.add({ targets: boom, alpha: 1, scale: s, duration: 220, ease: 'Back.out' });
     this.tweens.add({ targets: boom, alpha: 0, scale: s * 1.15, duration: 450, delay: 450, onComplete: () => boom.destroy() });
 

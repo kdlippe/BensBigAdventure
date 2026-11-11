@@ -57,6 +57,10 @@ it's always the latest version.
   gravity, so jumps go higher and drift down slowly, and ramps send it on long, slow flights. The
   exhaust blows bubbles, and the nitro sprays a gush of water and bubbles instead of flames.
   (`physics` in `src/level.js`.)
+- **Pick a truck** on the title screen: Ben's orange-and-blue truck or the purple-and-green
+  **ghost truck** (ghosts, a haunted house and a skull on the side, lime-green chassis and coil
+  shocks). Tap a truck or its name; the pick is remembered. Under the sea the ghost truck wears its
+  own goggles and snorkel. (`?truck=1` or `?truck=2` in the address overrides the pick.)
 - **Ramps** on every level launch you into the air.
 - **Pits** (as wide as the truck): level 1 has none. Level 2 has 2, each with a ramp right before it
   that flies you over. Levels 3, 4 and 5 have 3: 1 with a ramp, and 2 with no ramp, so you jump those

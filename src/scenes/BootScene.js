@@ -31,6 +31,8 @@ const ENV_PNG = [
   // the King Crab boss (level 6)
   'king_body', 'king_claw', 'king_legs', 'king_rock', 'king_dizzy', 'king_sleep', 'king_zzz', 'king_crown',
   'king_arm_slam', 'king_slam_burst', 'king_slam_crack', 'king_slam_dust_l', 'king_slam_dust_r',
+  // the second truck to pick: the ghost truck
+  'truck2_body', 'truck2_wreck', 'truck2_boom', 'truck2_body_snorkel', 'truck2_wheel', 'truck2_wheel_far', 'truck2_chassis',
   'fence', 'tree', 'tires', 'finish_gate',
 ];
 const OUTLINE = 0x16161a;
@@ -77,19 +79,20 @@ export class BootScene extends Phaser.Scene {
 
   create() {
     this.makeTextures();
-    this.makeTruckIcon();
+    this.makeTruckIcon('normal', 'truck_icon');
+    this.makeTruckIcon('truck2', 'truck2_icon');
     this.scene.start('Title');
   }
 
   // A small picture of the whole truck (body, struts and all four wheels) for
   // the progress bar: build the real truck once and snapshot it into a texture.
-  makeTruckIcon() {
+  makeTruckIcon(look, key) {
     const W = 440;
     const H = 270;
-    const truck = new Truck(this, 0, 0);
+    const truck = new Truck(this, 0, 0, look);
     const rt = this.make.renderTexture({ width: W, height: H }, false);
     rt.draw(truck.container, 175, 200); // hub midpoint lands here; leaves room for the cab and exhaust
-    rt.saveTexture('truck_icon');
+    rt.saveTexture(key);
     truck.container.destroy();
   }
 

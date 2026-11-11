@@ -49,3 +49,22 @@ export function saveBest(level, seconds) {
     /* storage blocked */
   }
 }
+
+// Which truck Ben picked on the title screen: 1 (Ben's truck) or 2 (the ghost truck)
+const TRUCK_KEY = 'bmtr.truck';
+
+export function loadTruck() {
+  try {
+    return window.localStorage.getItem(TRUCK_KEY) === '2' ? 2 : 1;
+  } catch (e) {
+    return 1;
+  }
+}
+
+export function saveTruck(n) {
+  try {
+    window.localStorage.setItem(TRUCK_KEY, String(n === 2 ? 2 : 1));
+  } catch (e) {
+    /* storage blocked */
+  }
+}
