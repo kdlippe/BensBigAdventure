@@ -85,7 +85,8 @@ export class GameScene extends Phaser.Scene {
     this.boxes = this.level.boxes.map((b) => ({
       ...b,
       alive: true,
-      img: this.add.image(b.x, b.y, 'crate').setDisplaySize(BOX, BOX).setDepth(20), // a wooden crate
+      // a wooden crate, drawn a touch bigger than its spot so stacked crates' outlines overlap (no gaps)
+      img: this.add.image(b.x, b.y, 'crate').setDisplaySize(BOX + 3, BOX + 3).setDepth(20),
     }));
 
     this.stars = this.level.stars.map((s, i) => {
