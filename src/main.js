@@ -1,6 +1,7 @@
 import { BootScene } from './scenes/BootScene.js';
 import { TitleScene } from './scenes/TitleScene.js';
 import { GameScene } from './scenes/GameScene.js';
+import { LevelScene } from './scenes/LevelScene.js';
 import { installTabletHelpers } from './device.js';
 
 async function start() {
@@ -26,7 +27,7 @@ async function start() {
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
     input: { activePointers: 3 },
-    scene: [BootScene, TitleScene, GameScene],
+    scene: [BootScene, TitleScene, LevelScene, GameScene],
   });
 }
 

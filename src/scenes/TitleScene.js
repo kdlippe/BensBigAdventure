@@ -3,7 +3,7 @@ import { sfx } from '../sound.js';
 import { music } from '../music.js';
 import { requestLandscape } from '../device.js';
 import { textStyle, pillButton } from '../style.js';
-import { loadProgress, saveProgress, loadTruck, saveTruck } from '../progress.js';
+import { loadTruck, saveTruck } from '../progress.js';
 import { addBackdrop, addGround, SKY } from '../scenery.js';
 
 export class TitleScene extends Phaser.Scene {
@@ -83,32 +83,21 @@ export class TitleScene extends Phaser.Scene {
     // the title screen is quiet: the music starts again with the next level
     music.stop();
 
+    // GO! goes on to picking a level
     let started = false;
-    const start = (level) => {
+    const go = () => {
       if (started) return;
       started = true;
       requestLandscape();
       sfx.unlock();
       sfx.button();
-      if (level === 1) saveProgress(1); // a new game starts over from level 1
-      this.scene.start('Game', { level });
+      this.scene.start('Levels');
     };
-
-    const reached = loadProgress();
-    if (reached <= 1) {
-      // first time (or a fresh game): one big GO! button
-      const play = this.add.image(width / 2, 210, 'btn_round').setScale(0.9).setInteractive({ useHandCursor: true });
-      const label = this.add.text(width / 2, 206, 'GO!', textStyle(46)).setOrigin(0.5);
-      this.tweens.add({ targets: [play, label], scale: '+=0.08', yoyo: true, repeat: -1, duration: 500 });
-      play.on('pointerdown', () => start(1));
-      this.input.keyboard.once('keydown-SPACE', () => start(1));
-      this.input.keyboard.once('keydown-ENTER', () => start(1));
-    } else {
-      // keep going from the level Ben reached, or start a new game
-      const keep = pillButton(this, width / 2 + 180, 210, 'pill_green', `LEVEL ${reached}  ▶`, () => start(reached), { fixed: false });
-      pillButton(this, width / 2 - 180, 210, 'pill_blue', 'NEW GAME', () => start(1), { scale: 0.85, fixed: false });
-      this.tweens.add({ targets: keep.parts, scale: '+=0.05', yoyo: true, repeat: -1, duration: 500 });
-      this.input.keyboard.once('keydown-ENTER', () => start(reached));
-    }
+    const play = this.add.image(width / 2, 210, 'btn_round').setScale(0.9).setInteractive({ useHandCursor: true });
+    const label = this.add.text(width / 2, 206, 'GO!', textStyle(46)).setOrigin(0.5);
+    this.tweens.add({ targets: [play, label], scale: '+=0.08', yoyo: true, repeat: -1, duration: 500 });
+    play.on('pointerdown', go);
+    this.input.keyboard.once('keydown-SPACE', go);
+    this.input.keyboard.once('keydown-ENTER', go);
   }
 }

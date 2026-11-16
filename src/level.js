@@ -35,7 +35,7 @@ export const LEVELS = [
 ];
 
 export const BOX = 80;
-export const PIT_WIDTH = 360; // about the width of the truck (wheel to wheel is ~320)
+export const PIT_WIDTH = 240; // a bit wider than the gap between the wheel hubs (196): you still have to jump it
 export const PIT_BOTTOM = 2600; // pits are "bottomless": the wheels find nothing to stand on
 export const NITRO_CANS = 3;
 

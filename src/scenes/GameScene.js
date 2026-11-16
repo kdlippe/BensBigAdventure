@@ -4,7 +4,7 @@ import { Truck, WHEEL_R, HALF_BASE, SINK } from '../truck.js';
 import { sfx } from '../sound.js';
 import { music } from '../music.js';
 import { requestLandscape } from '../device.js';
-import { textStyle, pillButton } from '../style.js';
+import { textStyle, pillButton, formatTime } from '../style.js';
 import { addBackdrop, addGround, addPit, skyFor, THEME_SCENERY } from '../scenery.js';
 import { FLAME_ART } from '../flameArt.js';
 import { Crab, CRAB_HALF_WIDTH } from '../crab.js';
@@ -32,6 +32,7 @@ const NITRO_MAX = 3; // most charges you can carry
 const NITRO_START = 1; // charges at the start of the level
 
 const BRAKE = 700; // how hard reverse slows you down from nitro speed
+const PIT_EDGE = 60; // the truck falls into a pit once its middle is this far in (a wheel on the rim can't hold it)
 const WARP_AT = (L) => L - 300; // boss arena: driving right past here goes through the warp gate
 const FLAME_DIR = 0.95; // flames shoot up and back from the pipes (radians from straight back)
 const FLAME_LENGTH = 150; // how long a nitro flame jet is, in game px
@@ -456,10 +457,11 @@ export class GameScene extends Phaser.Scene {
     const rx = t.x - HALF_BASE * cos;
     const fx = t.x + HALF_BASE * cos;
     // Over a pit a wheel has nothing under it. If only one wheel is over the
-    // pit, the other one holds the truck up; with both over it, it falls.
+    // pit, the other one holds the truck up - until the truck's middle is
+    // PIT_EDGE into the pit (or both wheels are over it): then it falls.
     const sR = this.level.isPit(rx) ? null : ground(rx);
     const sF = this.level.isPit(fx) ? null : ground(fx);
-    const overPit = sR === null && sF === null;
+    const overPit = (sR === null && sF === null) || (this.level.isPit(t.x - PIT_EDGE) && this.level.isPit(t.x + PIT_EDGE));
     const yR = (t.inPit || overPit ? PIT_BOTTOM : sR ?? sF) - WHEEL_R;
     const yF = (t.inPit || overPit ? PIT_BOTTOM : sF ?? sR) - WHEEL_R;
     const groundHubY = (yR + yF) / 2;
@@ -1422,10 +1424,4 @@ export class GameScene extends Phaser.Scene {
       return true;
     });
   }
-}
-
-function formatTime(seconds) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds - m * 60;
-  return `${m}:${s.toFixed(1).padStart(4, '0')}`;
 }

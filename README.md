@@ -15,8 +15,8 @@ it's always the latest version.
 
 ![The title screen: Ben's orange-and-blue truck and the purple-and-green ghost truck parked side by side on the grass, with BEN'S TRUCK and GHOST TRUCK name tags and a GO! button](docs/screenshots/title.jpg)
 
-On the title screen, tap a truck (or its name tag) to pick it, then tap **GO!** (or the level
-button). The picked truck bounces on its springs; the other one is greyed out.
+On the title screen, tap a truck (or its name tag) to pick it, then tap **GO!**. The picked truck
+bounces on its springs; the other one is greyed out.
 
 | Truck | Looks like |
 |---|---|
@@ -26,7 +26,14 @@ button). The picked truck bounces on its springs; the other one is greyed out.
 Either truck drives exactly the same, on every level. Under the sea each one wears its own goggles
 and snorkel, and the little truck on the progress bar matches the one you picked. The pick is
 remembered in that browser, so it's already chosen next time. You can change trucks any time from
-the title screen (🏠 in a level goes back to it) and carry on from the level you reached.
+the title screen (🏠 in a level goes back to it).
+
+### Pick a level
+
+After **GO!** comes the level picker: six cards, one per level, each showing that level's backdrop,
+its creature and its name. Tap a card to play it. Every level can be played straight away (no
+locks). A level you've finished gets a gold star and your best time, and the next level you haven't
+done yet bounces; **Enter** plays that one. 🏠 goes back to the truck picker.
 
 ### The levels
 
@@ -61,8 +68,8 @@ the title screen (🏠 in a level goes back to it) and carry on from the level y
 
 - **6 levels**: five races, one for each look, each with 50 stars and the same length, then the
   **King Crab** boss fight (see below). The level you're on shows
-  under the progress bar. Finishing a level unlocks the next (**NEXT LEVEL**); the title screen offers
-  **NEW GAME** or carries on from the level you reached, and the 🏠 button goes back to the title.
+  under the progress bar. Finishing a level offers **NEXT LEVEL**; any level can be picked after
+  **GO!** (see [Pick a level](#pick-a-level)), and the 🏠 button goes back to the title.
 - **Music**: an original 16-bit (SNES-style) tune for each look - bouncy for the meadow, music-box
   spooky for the graveyard, a cowboy trot for the desert, a jingly sleigh ride for the snow, a
   dreamy wobbly drift under the sea, and a fast, bold boss tune for the King Crab - made in code (`src/music.js`). It always plays during a level; the title screen is quiet, and the music starts again with the next level.
@@ -72,16 +79,18 @@ the title screen (🏠 in a level goes back to it) and carry on from the level y
   falling (snowy pines, a frozen log, ice crystals, snowball piles, an icy arch at the finish); level 5
   is under the sea (kelp, coral, seashells, anchors, treasure chests, sunken ships, bubbles rising, and
   a coral arch with a treasure chest at the finish). Set per level with `theme` in `src/level.js`.
-- **Under the sea** (level 5) the truck wears goggles and a snorkel, and it's floaty: half the
-  gravity, so jumps go higher and drift down slowly, and ramps send it on long, slow flights. The
+- **Under the sea** (level 5) the truck wears goggles and a snorkel, and it's a little floaty:
+  jumps go as high as on land but come down a bit slower. It drives just as fast. The
   exhaust blows bubbles, and the nitro sprays a gush of water and bubbles instead of flames.
   (`physics` in `src/level.js`.)
 - **Two trucks** to pick from on the title screen (see [Pick your truck](#pick-your-truck)). Adding
   `?truck=1` or `?truck=2` to the address overrides the pick (handy for testing).
 - **Ramps** on every level launch you into the air.
-- **Pits** (as wide as the truck): level 1 has none. Level 2 has 2, each with a ramp right before it
+- **Pits** (240 px wide, about 2/3 of the truck): level 1 has none. Level 2 has 2, each with a ramp right before it
   that flies you over. Levels 3, 4 and 5 have 3: 1 with a ramp, and 2 with no ramp, so you jump those
-  yourself (a little arc of stars shows where). Fall in and you start the level again.
+  yourself (a little arc of stars shows where). Driving over without jumping drops you in: a wheel
+  on the rim can't hold the truck once its middle is 60 px into the pit (`PIT_EDGE` in
+  `src/scenes/GameScene.js`). Fall in and you start the level again.
 - **Nitro**: you start with 1 charge and can carry up to 3 (the number on the ⚡ button). Each boost drives you
   forward at nearly double speed for 3 seconds. There are always 3 red nitro canisters on the track (one in each third), each giving a charge;
   some float high, so you have to jump for them.
@@ -144,7 +153,8 @@ you never see a mix of old and new code.)
 index.html              page that loads Phaser (from a CDN) and the game
 src/main.js             game setup
 src/scenes/BootScene.js loads the truck art, draws stars/buttons and both trucks' progress-bar icons
-src/scenes/TitleScene.js title screen: pick a truck, GO! / NEW GAME / keep going
+src/scenes/TitleScene.js title screen: pick a truck, then GO!
+src/scenes/LevelScene.js pick a level: six cards (backdrop, creature, name, star and best time)
 src/scenes/GameScene.js the level: driving, jumping, boxes, stars, finish
 src/level.js            the 4 levels: ramps, box stacks, pits, stars, canisters, crabs, scenery
 src/progress.js         level reached, best time per level and the truck picked (saved in the browser)
