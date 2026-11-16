@@ -9,6 +9,13 @@ export const textStyle = (size, color = '#ffffff') => ({
   strokeThickness: Math.max(4, Math.round(size / 7)),
 });
 
+// seconds -> "1:23.4"
+export function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds - m * 60;
+  return `${m}:${s.toFixed(1).padStart(4, '0')}`;
+}
+
 // A big pill-shaped button with a label. Returns { parts, setEnabled } where
 // parts are the game objects (for positioning / tweening). Pill textures are
 // drawn in BootScene: 'pill_green', 'pill_blue', 'pill_orange'.
